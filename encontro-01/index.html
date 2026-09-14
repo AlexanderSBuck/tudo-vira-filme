@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tudo Vira Filme · Encontro 1</title>
+
+<!-- Fontes da identidade "Slate & Patch", carregadas da web:
+     não precisa instalar nada no Mac pra renderizar certo. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+/* ===========================================
+   1. TOKENS DA IDENTIDADE "SLATE & PATCH"
+   Mude aqui pra mudar o deck inteiro.
+   =========================================== */
+:root {
+    /* Paleta oficial da oficina */
+    --ink:        #14110D;   /* fundo base, preto de estúdio com calor */
+    --ink-2:      #1E1A14;   /* fundo alternado de blocos/cards */
+    --ink-3:      #26211A;   /* elevação sutil */
+    --chalk:      #F1ECE1;   /* texto principal, branco-osso */
+    --chalk-dim:  #B3A99A;   /* texto secundário */
+    --chalk-faint:#7A7266;   /* legenda, dado técnico */
+    --tape:       #F5760F;   /* acento principal, todo destaque */
+    --stamp:      #C6FF00;   /* só XP/confirmação, nunca decorativo */
+    --rec:        #E63946;   /* só urgência real */
+    --line:       rgba(241,236,225,0.14);
+
+    /* Exigido pelo viewport-base: o palco herda o preto de estúdio */
+    --stage-bg:   #0A0806;
+    --slide-bg:   #14110D;
+
+    /* Tipografia, autorada no tamanho de palco 1920x1080 */
+    --font-display: 'Bebas Neue', 'Oswald', sans-serif;
+    --font-body:    'Source Sans 3', 'Helvetica Neue', sans-serif;
+    --font-mono:    'Space Mono', 'Courier New', monospace;
+
+    --size-mega:   260px;  /* número/palavra gigante */
+    --size-title:  150px;  /* título de slide */
+    --size-h2:      92px;
+    --size-h3:      54px;
+    --size-body:    34px;
+    --size-small:   26px;
+    --size-label:   22px;
+
+    --pad: 110px;          /* respiro padrão da borda do palco */
+
+    /* Movimento */
+    --snap:  cubic-bezier(0.16, 1, 0.3, 1);
+    --clack: cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===========================================
+   2. VIEWPORT-BASE.CSS (PALCO FIXO 16:9)
+   Conteúdo integral, obrigatório.
+   =========================================== */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+img, video, canvas, svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+@media print {
+    html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+    .deck-viewport { position: static; overflow: visible; background: #fff; }
+    .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px; height: 1080px;
+        break-after: page; page-break-after: always;
+    }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+    .deck-controls { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* ===========================================
+   3. CHROME DO PALCO
+   Grão de filme + barra de claquete em todo slide.
+   =========================================== */
+
+/* Grão: textura de filme animada por cima de tudo, sem bloquear clique */
+.grain {
+    position: absolute;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.16;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    animation: grainShift 0.7s steps(4) infinite;
+}
+@keyframes grainShift {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(-3%, 2%); }
+    50%  { transform: translate(2%, -3%); }
+    75%  { transform: translate(-2%, -2%); }
+    100% { transform: translate(0, 0); }
+}
+
+/* Barra listrada de claquete: assinatura da marca, topo de todo slide */
+.clapper-bar {
+    position: absolute;
+    top: 0; left: 0;
+    height: 22px;
+    width: 100%;
+    z-index: 40;
+    background: repeating-linear-gradient(
+        -45deg,
+        var(--tape) 0 34px,
+        var(--ink-2) 34px 68px
+    );
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.75s var(--clack);
+}
+.slide.visible .clapper-bar { transform: scaleX(1); }
+
+/* Claquete de canto: número do slide, tempo dele, e o minuto
+   acumulado da aula. Gerado por JS a partir do data-min de cada
+   <section class="slide">, então pra mudar um tempo basta trocar
+   aquele número no HTML: o acumulado se recalcula sozinho. */
+.slate {
+    position: absolute;
+    top: 58px; right: var(--pad);
+    z-index: 41;
+    text-align: right;
+    font-family: var(--font-mono);
+    line-height: 1.3;
+}
+.slate .n {
+    display: block;
+    font-size: var(--size-label);
+    letter-spacing: 0.22em;
+    color: var(--chalk-faint);
+}
+.slate .t {                       /* o tempo deste slide, o que ele olha de relance */
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--tape);
+}
+.slate .acc {                     /* minuto da aula em que este slide deve terminar */
+    display: block;
+    font-size: 17px;
+    letter-spacing: 0.16em;
+    color: rgba(241,236,225,0.26);
+}
+
+/* ===========================================
+   4. ANIMAÇÃO DE ENTRADA
+   Tudo entra escalonado quando o slide fica visível.
+   =========================================== */
+.reveal {
+    opacity: 0;
+    transform: translateY(38px);
+    transition: opacity 0.7s var(--snap), transform 0.7s var(--snap);
+}
+.slide.visible .reveal { opacity: 1; transform: translateY(0); }
+
+.slide.visible .d1  { transition-delay: 0.10s; }
+.slide.visible .d2  { transition-delay: 0.20s; }
+.slide.visible .d3  { transition-delay: 0.30s; }
+.slide.visible .d4  { transition-delay: 0.40s; }
+.slide.visible .d5  { transition-delay: 0.50s; }
+.slide.visible .d6  { transition-delay: 0.60s; }
+.slide.visible .d7  { transition-delay: 0.70s; }
+
+/* Título gigante entra por corte, como uma cortina de claquete descendo */
+.wipe {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.9s var(--clack);
+}
+.slide.visible .wipe { clip-path: inset(0 0 0 0); }
+
+/* ===========================================
+   5. COMPONENTES DE CONTEÚDO
+   =========================================== */
+
+/* Etiqueta laranja de fita gaffer, levemente torta */
+.tape-tag {
+    display: inline-block;
+    background: var(--tape);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 34px;
+    letter-spacing: 0.06em;
+    padding: 10px 28px 6px;
+    transform: rotate(-1.2deg);
+}
+
+/* Sobrelinha técnica em mono */
+.eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--size-label);
+    letter-spacing: 0.3em;
+    color: var(--tape);
+    text-transform: uppercase;
+}
+
+/* Títulos */
+h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    color: var(--chalk);
+    /* line-height folgado de propósito: em português os acentos de caixa alta
+       (Ã, É, Ó, Ê) sobem acima da altura das maiúsculas e são cortados se
+       apertar demais. Não abaixe de 0.96. */
+    line-height: 0.96;
+    padding-top: 0.06em;
+    letter-spacing: 0.01em;
+}
+h1 { font-size: var(--size-title); }
+h2 { font-size: var(--size-h2); }
+h3 { font-size: var(--size-h3); }
+
+p, li {
+    font-family: var(--font-body);
+    font-size: var(--size-body);
+    color: var(--chalk-dim);
+    line-height: 1.45;
+}
+
+.lead { color: var(--chalk); font-size: 40px; }
+em { color: var(--tape); font-style: italic; }
+strong { color: var(--chalk); font-weight: 700; }
+
+/* Layout base de slide de conteúdo */
+.pad {
+    position: absolute;
+    inset: 0;
+    padding: 150px var(--pad) 96px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Rodapé técnico do slide */
+.foot {
+    position: absolute;
+    left: var(--pad); bottom: 58px;
+    max-width: 1300px;   /* nunca chega no canto direito do palco */
+    font-family: var(--font-mono);
+    font-size: var(--size-label);
+    letter-spacing: 0.18em;
+    color: var(--chalk-faint);
+}
+
+/* ===========================================
+   6. SLIDE 1: ABERTURA
+   =========================================== */
+/* Lockup v2 (círculo + play). O PNG já vem com fundo #14110D,
+   igual ao ink do palco, então não aparece caixa em volta. */
+.title-slide .logo {
+    position: absolute;
+    top: 104px; left: var(--pad);
+    width: 380px;
+    z-index: 2;
+}
+/* Abertura ancorada embaixo: a logo ocupa o topo sozinha,
+   o bloco de título cresce a partir da base. Evita colisão. */
+.title-slide .pad {
+    justify-content: flex-end;
+    padding-bottom: 150px;
+}
+/* 172px, e não mais: acima disso o bloco de 3 linhas sobe
+   e encosta na logo do topo. */
+.title-slide h1 { font-size: 172px; }
+
+/* Faixa diagonal ao fundo, o "bate" da claquete.
+   Discreta de propósito: é atmosfera, não elemento de leitura. */
+.big-slash {
+    position: absolute;
+    right: -200px; top: -120px;
+    width: 820px; height: 1400px;
+    background: repeating-linear-gradient(
+        -45deg,
+        rgba(245,118,15,0.06) 0 60px,
+        transparent 60px 120px
+    );
+    transform: rotate(8deg);
+    z-index: 0;
+}
+
+/* ===========================================
+   7. GRADE DOS 4 EIXOS
+   =========================================== */
+.eixos {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+    margin-top: 64px;
+}
+.eixo {
+    background: var(--ink-2);
+    border-top: 5px solid var(--tape);
+    padding: 40px 34px 44px;
+    min-height: 372px;
+}
+.eixo .n {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    letter-spacing: 0.2em;
+    color: var(--chalk-faint);
+    display: block;
+    margin-bottom: 22px;
+}
+.eixo h3 { font-size: 46px; margin-bottom: 20px; }
+.eixo p  { font-size: 27px; line-height: 1.4; }
+
+/* ===========================================
+   8. TRILHA DOS 4 MÓDULOS
+   =========================================== */
+.trilha {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+    margin-top: 74px;
+}
+.modulo {
+    position: relative;
+    background: var(--ink-2);
+    padding: 44px 32px 40px;
+    min-height: 340px;
+}
+.modulo::after {           /* seta de continuidade entre módulos */
+    content: "";
+    position: absolute;
+    right: -22px; top: 50%;
+    width: 22px; height: 3px;
+    background: var(--tape);
+}
+.modulo:last-child::after { display: none; }
+.modulo .fase {
+    font-family: var(--font-display);
+    font-size: 68px;
+    color: var(--tape);
+    line-height: 0.9;
+    display: block;
+}
+.modulo .enc {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    color: var(--chalk-faint);
+    letter-spacing: 0.14em;
+    display: block;
+    margin: 14px 0 20px;
+}
+.modulo p { font-size: 25px; }
+
+/* ===========================================
+   9. SLIDE DO QR CODE
+   =========================================== */
+.qr-wrap {
+    display: flex;
+    align-items: center;
+    gap: 110px;
+    margin-top: 30px;
+}
+.qr-box {
+    background: var(--chalk);
+    padding: 26px;
+    flex-shrink: 0;
+    transform: rotate(1.5deg);
+}
+.qr-box img { display: block; width: 380px; height: 380px; }
+.url-chip {
+    display: inline-block;
+    margin-top: 40px;
+    border: 2px solid var(--tape);
+    background: var(--ink-2);
+    color: var(--stamp);
+    font-family: var(--font-mono);
+    font-size: 32px;
+    padding: 20px 32px;
+}
+
+/* ===========================================
+   10. SLIDES DAS 5 LINGUAGENS
+   Cada uma tem etiqueta fixa + moldura pro still.
+   =========================================== */
+.ling-head {
+    display: flex;
+    align-items: baseline;
+    gap: 34px;
+    margin-bottom: 34px;
+}
+.ling-head h1 { font-size: 132px; }
+.ling-head .idx {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    color: var(--tape);
+    letter-spacing: 0.2em;
+}
+/* padding-bottom é zona de segurança: o contador de slides fica fixo no
+   canto inferior direito da janela, e sem essa folga um crédito de três
+   linhas passa por baixo dele. */
+.ling-body { display: flex; gap: 56px; align-items: stretch; flex: 1; padding-bottom: 70px; }
+
+/* Moldura tracejada: é aqui que entra o still real.
+   Pra trocar: substitua a .frame inteira por <img src="assets/nome.jpg" class="still"> */
+.frame {
+    flex: 1.35;
+    border: 3px dashed rgba(241,236,225,0.28);
+    background:
+        linear-gradient(135deg, rgba(245,118,15,0.07) 0%, transparent 60%),
+        var(--ink-2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+.frame .hint {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    letter-spacing: 0.18em;
+    color: var(--chalk-faint);
+}
+.frame .obra {
+    font-family: var(--font-display);
+    font-size: 58px;
+    color: var(--tape);
+    text-align: center;
+    line-height: 1.06;
+    padding: 4px 40px 0;
+}
+/* O still real da obra. O min-width:0 é obrigatório: sem ele o item
+   flex herda min-width:auto, se recusa a encolher abaixo do tamanho
+   natural da imagem e esmaga a coluna de texto ao lado. */
+.still {
+    flex: 1.35;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    align-self: stretch;
+    object-fit: cover;
+}
+
+.ling-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.ling-copy .pitch {
+    font-family: var(--font-body);
+    font-size: 38px;
+    color: var(--chalk);
+    line-height: 1.35;
+    margin-bottom: 34px;
+}
+.ling-copy .obras { border-top: 1px solid var(--line); padding-top: 26px; }
+.ling-copy .obras div {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    color: var(--chalk-dim);
+    line-height: 1.7;
+}
+.ling-copy .obras span { color: var(--tape); }
+
+/* ===========================================
+   10b. SLIDES DE CONCEITO DAS LINGUAGENS
+   O segundo slide de cada linguagem: o que ela ensina
+   e o que a separa das outras quatro.
+   =========================================== */
+.conceitos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+    margin-top: 48px;
+}
+.conceito {
+    background: var(--ink-2);
+    border-left: 5px solid var(--tape);
+    padding: 32px 30px 34px;
+    min-height: 300px;
+}
+.conceito h3 {
+    font-size: 40px;
+    margin-bottom: 16px;
+    line-height: 1.02;
+}
+.conceito p { font-size: 27px; line-height: 1.4; }
+
+/* A linha que fecha o slide: o critério de decisão, já que eles
+   vão pontuar de 0 a 10 logo depois. */
+.escolha {
+    margin-top: 42px;
+    border-top: 2px solid var(--tape);
+    padding-top: 26px;
+    font-family: var(--font-body);
+    font-size: 34px;
+    color: var(--chalk);
+}
+.escolha b {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    letter-spacing: 0.18em;
+    color: var(--tape);
+    display: block;
+    margin-bottom: 12px;
+}
+
+/* ===========================================
+   11. LISTAS: ACORDO E PERGUNTAS
+   =========================================== */
+.stamped {
+    border: 3px solid var(--tape);
+    background: var(--ink-2);
+    padding: 46px 54px;
+    margin-top: 44px;
+}
+.stamped .sel {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    letter-spacing: 0.26em;
+    color: var(--tape);
+    margin-bottom: 26px;
+}
+.rules { list-style: none; display: grid; gap: 20px; }
+.rules li {
+    display: flex; gap: 22px; align-items: baseline;
+    font-size: 31px; color: var(--chalk);
+}
+.rules li b {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    color: var(--tape);
+    flex-shrink: 0;
+}
+
+.perguntas { list-style: none; display: grid; gap: 30px; margin-top: 54px; }
+.perguntas li {
+    display: flex; gap: 30px; align-items: flex-start;
+    border-left: 4px solid var(--tape);
+    padding-left: 28px;
+    font-size: 34px;
+    color: var(--chalk);
+}
+.perguntas li span {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    color: var(--chalk-faint);
+    padding-top: 6px;
+    flex-shrink: 0;
+}
+
+/* ===========================================
+   12. SLIDES DE IMPACTO (frase única)
+   =========================================== */
+.impact { align-items: flex-start; justify-content: center; }
+.impact h1 {
+    font-size: var(--size-mega);
+    line-height: 0.92;   /* espaço pros acentos de caixa alta */
+    max-width: 1500px;
+}
+.impact .sub { font-size: 40px; margin-top: 44px; max-width: 1200px; }
+
+/* Número gigante fantasma ao fundo */
+.ghost {
+    position: absolute;
+    right: 40px; bottom: -110px;
+    font-family: var(--font-display);
+    font-size: 620px;
+    line-height: 0.7;
+    color: rgba(241,236,225,0.045);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Escala 0-10 desenhada, para o slide de pontuação */
+.scale {
+    display: flex;
+    gap: 12px;
+    margin-top: 60px;
+}
+.scale div {
+    flex: 1;
+    height: 96px;
+    background: var(--ink-2);
+    border-bottom: 5px solid var(--tape);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 30px;
+    color: var(--chalk-dim);
+}
+.scale div:last-child { background: var(--tape); color: var(--ink); border-bottom-color: var(--stamp); }
+
+/* ===========================================
+   13. CHROME FORA DO PALCO (contador + editor)
+   =========================================== */
+/* Contador no canto inferior direito, não no centro:
+   no centro ele atropelava o rodapé dos slides. */
+.deck-controls {
+    left: auto;
+    right: 26px;
+    bottom: 20px;
+    transform: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: rgba(241,236,225,0.45);
+    background: rgba(20,17,13,0.8);
+    padding: 7px 16px;
+    border: 1px solid rgba(241,236,225,0.12);
+    user-select: none;
+}
+.edit-hotzone {
+    position: fixed; top: 0; left: 0;
+    width: 80px; height: 80px;
+    z-index: 10000; cursor: pointer;
+}
+.edit-toggle {
+    position: fixed; top: 18px; left: 18px;
+    z-index: 10001;
+    background: var(--tape); color: var(--ink);
+    border: none; border-radius: 4px;
+    font-size: 18px; padding: 9px 13px; cursor: pointer;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+.edit-toggle.active { background: var(--stamp); }
+[contenteditable="true"] { outline: 2px dashed var(--stamp); outline-offset: 6px; cursor: text; }
+</style>
+</head>
+<body>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+    <!-- ============ 01 · ABERTURA ============ -->
+    <section class="slide title-slide active visible" data-min="1">
+        <div class="clapper-bar"></div>
+        <div class="big-slash"></div>
+        <img class="logo reveal d1" src="assets/logo.png" alt="Tudo Vira Filme">
+        <div class="pad">
+            <div class="eyebrow reveal d2">Encontro 1 de 32 · Cine Teatro Ribalta</div>
+            <h1 class="wipe" style="margin-top:22px">QUEM SOMOS<br>E O QUE A<br>GENTE VÊ</h1>
+            <p class="lead reveal d5" style="margin-top:40px">Quatro meses. Cinco linguagens. Um filme que ainda não existe.</p>
+        </div>
+        <div class="foot">VER · ESCOLHER · FAZER · MOSTRAR</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 02 · RODA DE ABERTURA ============ -->
+    <section class="slide" data-min="6">
+        <div class="clapper-bar"></div>
+        <div class="ghost">01</div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Roda de abertura</div>
+            <h1 class="wipe" style="margin-top:30px;font-size:190px">SEU NOME,<br>E UMA COISA<br>QUE VOCÊ VIU</h1>
+            <p class="sub reveal d4">Um filme, uma série ou um vídeo que te marcou. Não precisa dizer por quê ainda.</p>
+        </div>
+        <div class="foot">TODO MUNDO FALA, INCLUSIVE EU</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 03 · OS 4 EIXOS ============ -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">O que essa oficina desenvolve de verdade</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:112px">NÃO É SÓ APERTAR REC</h1>
+            <div class="eixos">
+                <div class="eixo reveal d3">
+                    <span class="n">EIXO 01</span>
+                    <h3>AUTONOMIA</h3>
+                    <p>Decidir, errar, refazer e sustentar a própria escolha sem depender de mim.</p>
+                </div>
+                <div class="eixo reveal d4">
+                    <span class="n">EIXO 02</span>
+                    <h3>COLABORAÇÃO<br>E LIDERANÇA</h3>
+                    <p>Liderar e ser liderado. Todo mundo passa por funções de comando e de apoio.</p>
+                </div>
+                <div class="eixo reveal d5">
+                    <span class="n">EIXO 03</span>
+                    <h3>SENSO<br>CRÍTICO</h3>
+                    <p>Entender que todo enquadramento é uma escolha, e toda escolha exclui alguma coisa.</p>
+                </div>
+                <div class="eixo reveal d6">
+                    <span class="n">EIXO 04</span>
+                    <h3>IDENTIDADE<br>E VOZ</h3>
+                    <p>Descobrir que você tem algo a dizer, e de onde você fala.</p>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 04 · A TRILHA DE 4 MESES ============ -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">32 encontros · 4 meses · 1 mostra pública</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:112px">ONDE A GENTE VAI CHEGAR</h1>
+            <div class="trilha">
+                <div class="modulo reveal d3">
+                    <span class="fase">VER</span>
+                    <span class="enc">ENCONTROS 1 A 8</span>
+                    <p>Perder o medo do equipamento e aprender a ler imagem.</p>
+                </div>
+                <div class="modulo reveal d4">
+                    <span class="fase">ESCOLHER</span>
+                    <span class="enc">ENCONTROS 9 A 16</span>
+                    <p>Experimentar as cinco linguagens e escolher a sua.</p>
+                </div>
+                <div class="modulo reveal d5">
+                    <span class="fase">FAZER</span>
+                    <span class="enc">ENCONTROS 17 A 26</span>
+                    <p>Sua produtora assume o projeto. Eu só entro quando sou chamado.</p>
+                </div>
+                <div class="modulo reveal d6">
+                    <span class="fase">MOSTRAR</span>
+                    <span class="enc">ENCONTROS 27 A 32</span>
+                    <p>Vocês finalizam os filmes e produzem a mostra. Eu viro plateia.</p>
+                </div>
+            </div>
+            <p class="reveal d7" style="margin-top:56px;font-size:30px">A cada módulo eu saio mais de cena, <strong>e vocês assumem mais.</strong> No fim, o filme é de vocês.</p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 05 · A PRODUTORA ============ -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Como vocês vão trabalhar</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:112px">UMA PRODUTORA, CINCO FILMES</h1>
+            <p class="reveal d3" style="font-size:36px;color:var(--chalk);margin-top:34px;max-width:1500px">Vocês não são cinco alunos soltos fazendo trabalho de escola. São <strong>uma produtora só</strong>, e ela vai assinar cinco curtas: um de cada um de vocês.</p>
+            <div class="trilha" style="grid-template-columns:repeat(3,1fr);margin-top:56px">
+                <div class="modulo reveal d4" style="min-height:280px">
+                    <span class="fase" style="font-size:52px">NO SEU</span>
+                    <span class="enc">VOCÊ DIRIGE</span>
+                    <p>O filme é seu, na linguagem que você escolher no Encontro 16.</p>
+                </div>
+                <div class="modulo reveal d5" style="min-height:280px">
+                    <span class="fase" style="font-size:52px">NOS OUTROS</span>
+                    <span class="enc">VOCÊ GUARNECE</span>
+                    <p>Fotografia, som, produção, arte. Função diferente em cada filme.</p>
+                </div>
+                <div class="modulo reveal d6" style="min-height:280px">
+                    <span class="fase" style="font-size:52px">NOS CINCO</span>
+                    <span class="enc">A MESMA LOGO</span>
+                    <p>O nome da produtora vocês inventam juntos no Encontro 8.</p>
+                </div>
+            </div>
+        </div>
+        <div class="foot">TETO DE 5 MINUTOS POR CURTA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 06 · OS TRÊS SÁBADOS ============ -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Marca no calendário agora</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:124px">TRÊS SÁBADOS DE SET</h1>
+            <p class="reveal d3" style="font-size:36px;color:var(--chalk);margin-top:30px;max-width:1500px">Aula de 1h30 não grava filme. As diárias acontecem em três sábados, das 9h às 13h, aqui na Ribalta e em locação externa.</p>
+            <div class="eixos" style="grid-template-columns:repeat(3,1fr);margin-top:50px">
+                <div class="eixo reveal d4" style="min-height:230px">
+                    <span class="n">DIÁRIA 01</span>
+                    <h3 style="font-size:72px">14/11</h3>
+                    <p>Dois filmes</p>
+                </div>
+                <div class="eixo reveal d5" style="min-height:230px">
+                    <span class="n">DIÁRIA 02</span>
+                    <h3 style="font-size:72px">21/11</h3>
+                    <p>Dois filmes</p>
+                </div>
+                <div class="eixo reveal d6" style="min-height:230px">
+                    <span class="n">DIÁRIA 03</span>
+                    <h3 style="font-size:72px">28/11</h3>
+                    <p>O quinto filme, e as retomadas</p>
+                </div>
+            </div>
+            <p class="reveal d7" style="margin-top:46px;font-size:32px"><strong>O filme do colega depende de você aparecer.</strong> Cinco pessoas é a equipe inteira, não tem reserva no banco.</p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 07 · QR DA FICHA ============ -->
+    <section class="slide" data-min="8">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Caderno de Bordo</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:124px">CRIE SUA FICHA</h1>
+            <div class="qr-wrap">
+                <div class="qr-box reveal d3"><img src="assets/qr.png" alt="QR code do Caderno de Bordo"></div>
+                <div>
+                    <p class="reveal d4" style="font-size:38px;color:var(--chalk)">Nome, uma frase sobre você agora, a cor do seu crachá, e <em>uma foto que te represente.</em></p>
+                    <p class="reveal d5" style="margin-top:26px">A foto vai ficar visível pra turma toda, e a gente vai voltar nela daqui a pouco. Escolhe com carinho.</p>
+                    <div class="url-chip reveal d6">caderno-de-bordo.lovable.app</div>
+                </div>
+            </div>
+        </div>
+        <div class="foot">CADA UM NO PRÓPRIO CELULAR</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 08 · ABERTURA DO PITCH ============ -->
+    <section class="slide" data-min="1">
+        <div class="clapper-bar"></div>
+        <div class="ghost">05</div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Agora é comigo</div>
+            <h1 class="wipe" style="font-size:230px">CINCO<br>CAMINHOS</h1>
+            <p class="sub reveal d4">Vou apresentar cinco jeitos diferentes de contar história, com trabalho meu de verdade. Cada um deles pode ser o seu. <em>No fim, vocês pontuam.</em></p>
+        </div>
+        <div class="foot">5 LINGUAGENS, UMA DE CADA VEZ</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 09 · FICÇÃO ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="ling-head">
+                <h1 class="wipe">FICÇÃO</h1>
+                <span class="idx reveal d2">01 / 05</span>
+            </div>
+            <div class="ling-body">
+                <img class="still reveal d3" src="assets/ficcao.jpg" alt="Still de Latasha">
+                <div class="ling-copy">
+                    <p class="pitch reveal d4">Inventar um mundo inteiro e convencer todo mundo de que ele existe. Uma entidade de 11 mil anos dentro do corpo de uma criança, filmada aqui do lado.</p>
+                    <div class="obras reveal d5">
+                        <div><span>LATASHA</span> · 2021</div>
+                        <div><span>ENCRUZILHADAS DO CAOS</span> · 2023, Edital Secult-ES, heavy metal e mitologia iorubá</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 10 · CONCEITOS: FICÇÃO ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <span class="tape-tag reveal d1">FICÇÃO</span>
+            <h1 class="wipe" style="margin-top:26px;font-size:88px">VOCÊ CONSTRÓI TUDO,<br>E RESPONDE POR TUDO</h1>
+            <div class="conceitos">
+                <div class="conceito reveal d3">
+                    <h3>PERSONAGEM</h3>
+                    <p>Alguém que quer uma coisa e tem algo no caminho. Sem isso, não existe cena.</p>
+                </div>
+                <div class="conceito reveal d4">
+                    <h3>DECUPAGEM</h3>
+                    <p>Quebrar a cena em planos antes de filmar. É aí que a direção acontece de verdade.</p>
+                </div>
+                <div class="conceito reveal d5">
+                    <h3>DIREÇÃO DE ATOR</h3>
+                    <p>Conduzir uma pessoa a fazer o que a cena precisa, sem mandar ela "atuar".</p>
+                </div>
+            </div>
+            <div class="escolha reveal d6">
+                <b>ESCOLHA ESTA SE</b>
+                Você quer inventar um mundo e dirigir gente dentro dele.
+            </div>
+        </div>
+        <div class="foot">CONSTRUIR UM MUNDO E CONDUZIR PESSOAS DENTRO DELE</div>
+        <div class="grain"></div>
+    </section>
+
+
+    <!-- ============ 11 · VIDEOCLIPE ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="ling-head">
+                <h1 class="wipe">VIDEOCLIPE</h1>
+                <span class="idx reveal d2">02 / 05</span>
+            </div>
+            <div class="ling-body">
+                <img class="still reveal d3" src="assets/videoclipe.jpg" alt="Still do clipe Devaneio">
+                <div class="ling-copy">
+                    <p class="pitch reveal d4">Aqui a música manda e a imagem obedece. É o formato mais livre de todos: não precisa fazer sentido, precisa fazer sentir.</p>
+                    <div class="obras reveal d5">
+                        <div><span>DEVANEIO</span> · André Prando, Melhor Videoclipe Nacional no 8º FestClip</div>
+                        <div><span>SPIRITUAL VOMIT</span> · banda Catacumba</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 12 · CONCEITOS: VIDEOCLIPE ============ -->
+    <section class="slide" data-min="1">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <span class="tape-tag reveal d1">VIDEOCLIPE</span>
+            <h1 class="wipe" style="margin-top:26px;font-size:88px">A ESTRUTURA JÁ EXISTE,<br>VOCÊ PREENCHE</h1>
+            <div class="conceitos">
+                <div class="conceito reveal d3">
+                    <h3>SINCRONIA</h3>
+                    <p>Cortar no tempo da música, e saber quando sair dele de propósito.</p>
+                </div>
+                <div class="conceito reveal d4">
+                    <h3>UMA IDEIA SÓ</h3>
+                    <p>Clipe bom costuma ter uma ideia visual única, levada até o fim sem medo.</p>
+                </div>
+                <div class="conceito reveal d5">
+                    <h3>PERFORMANCE</h3>
+                    <p>A câmera está ali pra fazer alguém parecer maior do que é na vida.</p>
+                </div>
+            </div>
+            <div class="escolha reveal d6">
+                <b>ESCOLHA ESTA SE</b>
+                Você já enxerga imagem quando escuta uma música.
+            </div>
+        </div>
+        <div class="foot">PENSAR IMAGEM NO TEMPO DA MÚSICA E NO RITMO DO CORTE</div>
+        <div class="grain"></div>
+    </section>
+
+
+    <!-- ============ 13 · DOCUMENTÁRIO ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="ling-head">
+                <h1 class="wipe">DOCUMENTÁRIO</h1>
+                <span class="idx reveal d2">03 / 05</span>
+            </div>
+            <div class="ling-body">
+                <img class="still reveal d3" src="assets/documentario.jpg" alt="Still de Plantadores de Água">
+                <div class="ling-copy">
+                    <p class="pitch reveal d4">Não inventa nada, e por isso é o mais difícil. Você aponta a câmera pra vida de alguém, e passa a ser responsável por como essa pessoa vai ser vista.</p>
+                    <div class="obras reveal d5">
+                        <div><span>PLANTADORES DE ÁGUA</span> · dois prêmios no Festival CineEma</div>
+                        <div><span>LEGADO</span> · Trainee Magalu, exclusivo para negros</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 14 · CONCEITOS: DOCUMENTÁRIO ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <span class="tape-tag reveal d1">DOCUMENTÁRIO</span>
+            <h1 class="wipe" style="margin-top:26px;font-size:88px">VOCÊ NÃO CONTROLA,<br>VOCÊ NEGOCIA</h1>
+            <div class="conceitos">
+                <div class="conceito reveal d3">
+                    <h3>RECORTE</h3>
+                    <p>O real é infinito. Documentário é o que você escolhe deixar de fora.</p>
+                </div>
+                <div class="conceito reveal d4">
+                    <h3>ESCUTA</h3>
+                    <p>A melhor cena quase sempre vem depois que a pessoa esquece a câmera.</p>
+                </div>
+                <div class="conceito reveal d5">
+                    <h3>ÉTICA</h3>
+                    <p>Quem você filmou continua existindo depois que o filme acaba.</p>
+                </div>
+            </div>
+            <div class="escolha reveal d6">
+                <b>ESCOLHA ESTA SE</b>
+                Você quer entender alguém de verdade, não inventar alguém.
+            </div>
+        </div>
+        <div class="foot">APROXIMAR-SE DO REAL E ASSUMIR RESPONSABILIDADE SOBRE QUEM SE FILMA</div>
+        <div class="grain"></div>
+    </section>
+
+
+    <!-- ============ 15 · VIDEOARTE ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="ling-head">
+                <h1 class="wipe">VIDEOARTE</h1>
+                <span class="idx reveal d2">04 / 05</span>
+            </div>
+            <div class="ling-body">
+                <img class="still reveal d3" src="assets/videoarte.jpg" alt="Still de Repolho">
+                <div class="ling-copy">
+                    <p class="pitch reveal d4">Sem personagem, sem enredo, sem explicação. Só corpo, imagem e tempo. É o mais estranho da lista, e é onde muita gente descobre que gosta.</p>
+                    <div class="obras reveal d5">
+                        <div><span>REPOLHO</span> · 2015, Prêmio Máximo de Melhor Curta Experimental</div>
+                        <div><span>BONECAS DE LOUÇA</span> · performance de rua no Centro Histórico de Vitória</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 16 · CONCEITOS: VIDEOARTE ============ -->
+    <section class="slide" data-min="1">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <span class="tape-tag reveal d1">VIDEOARTE</span>
+            <h1 class="wipe" style="margin-top:26px;font-size:88px">A IMAGEM SAI<br>DA SALA ESCURA</h1>
+            <div class="conceitos">
+                <div class="conceito reveal d3">
+                    <h3>DURAÇÃO</h3>
+                    <p>Sem começo, meio e fim obrigatórios. Costuma viver em loop.</p>
+                </div>
+                <div class="conceito reveal d4">
+                    <h3>CORPO E ESPAÇO</h3>
+                    <p>O corpo vira material, e o lugar onde a obra é exibida faz parte dela.</p>
+                </div>
+                <div class="conceito reveal d5">
+                    <h3>SEM CONTRATO</h3>
+                    <p>Ninguém precisa assistir do início ao fim. A pessoa atravessa a obra.</p>
+                </div>
+            </div>
+            <div class="escolha reveal d6">
+                <b>ESCOLHA ESTA SE</b>
+                Você quer que a imagem seja a obra, não o veículo de uma história.
+            </div>
+        </div>
+        <div class="foot">TIRAR A IMAGEM DA SALA ESCURA E COLOCÁ-LA NO ESPAÇO</div>
+        <div class="grain"></div>
+    </section>
+
+
+    <!-- ============ 17 · EXPERIMENTAL ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="ling-head">
+                <h1 class="wipe">EXPERIMENTAL</h1>
+                <span class="idx reveal d2">05 / 05</span>
+            </div>
+            <div class="ling-body">
+                <img class="still reveal d3" src="assets/experimental.jpg" alt="Still de Hic">
+                <div class="ling-copy">
+                    <p class="pitch reveal d4">Quebrar a regra de propósito, sabendo qual regra você está quebrando. Foi por aqui que meu trabalho chegou em Cusco e em Nova York.</p>
+                    <div class="obras reveal d5">
+                        <div><span>HIC</span> · 2017, Grande Prêmio em Cusco, seleção no BIFF Nova York</div>
+                        <div><span>EU, ZUMBI</span> · 2011, falso documentário banido do YouTube por parecer real demais</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 18 · CONCEITOS: EXPERIMENTAL ============ -->
+    <section class="slide" data-min="1">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <span class="tape-tag reveal d1">EXPERIMENTAL</span>
+            <h1 class="wipe" style="margin-top:26px;font-size:88px">QUEBRAR A REGRA,<br>DEPOIS DE ENTENDER</h1>
+            <div class="conceitos">
+                <div class="conceito reveal d3">
+                    <h3>FORMA É CONTEÚDO</h3>
+                    <p>Como você filma é o que o filme diz. Não dá pra separar as duas coisas.</p>
+                </div>
+                <div class="conceito reveal d4">
+                    <h3>REGRA CONSCIENTE</h3>
+                    <p>Quebrar sem saber é erro. Quebrar sabendo qual regra é escolha.</p>
+                </div>
+                <div class="conceito reveal d5">
+                    <h3>RITMO E REPETIÇÃO</h3>
+                    <p>O sentido nasce do acúmulo e da repetição, não do enredo.</p>
+                </div>
+            </div>
+            <div class="escolha reveal d6">
+                <b>ESCOLHA ESTA SE</b>
+                Você quer testar o limite da linguagem, não contar uma história.
+            </div>
+        </div>
+        <div class="foot">QUEBRAR A REGRA DEPOIS DE ENTENDÊ-LA</div>
+        <div class="grain"></div>
+    </section>
+
+
+    <!-- ============ 19 · PONTUAÇÃO ============ -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Sua vez</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:150px">DÊ SUA NOTA</h1>
+            <p class="reveal d3" style="font-size:38px;color:var(--chalk);margin-top:34px;max-width:1450px">No app, dê de <strong>0 a 10</strong> pra cada uma das cinco linguagens. Não é sobre qual é melhor, é sobre <em>o quanto aquilo te deu vontade de fazer.</em></p>
+            <div class="scale reveal d4">
+                <div>0</div><div>1</div><div>2</div><div>3</div><div>4</div>
+                <div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div>
+            </div>
+            <p class="reveal d6" style="margin-top:52px;font-size:30px"><strong>Guardem essas notas.</strong> A gente vai refazer isso mais pra frente no curso, e comparar com o que vocês acabaram de responder.</p>
+        </div>
+        <div class="foot">TODO MUNDO AO MESMO TEMPO, NO PRÓPRIO CELULAR</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 20 · APRESENTAÇÃO DA FICHA ============ -->
+    <section class="slide" data-min="11">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Agora um de cada vez</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:132px">SUA FICHA<br>NO TELÃO</h1>
+            <p class="reveal d3" style="font-size:36px;color:var(--chalk);margin-top:34px;max-width:1520px">Cada um sobe a própria ficha aqui e responde três coisas, em dois minutos:</p>
+            <ul class="perguntas" style="margin-top:40px">
+                <li class="reveal d4"><span>01</span>Por que essa foto, e não outra?</li>
+                <li class="reveal d5"><span>02</span>Qual linguagem levou sua nota mais alta?</li>
+                <li class="reveal d6"><span>03</span>Qual levou a mais baixa, e por quê?</li>
+            </ul>
+            <p class="reveal d7" style="margin-top:44px;font-size:30px">Quem escuta não julga e não debate. <strong>Só escuta.</strong></p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 21 · ACORDO, BASE FIXA ============ -->
+    <section class="slide" data-min="4">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Acordo da turma</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:112px">O QUE NÃO ESTÁ EM DISCUSSÃO</h1>
+            <div class="stamped reveal d3">
+                <div class="sel">BASE FIXA · CARIMBADA · VALE DENTRO E FORA DA OFICINA</div>
+                <ul class="rules">
+                    <li><b>01</b><span>Respeito à diferença: sem racismo, machismo, homofobia ou qualquer discriminação.</span></li>
+                    <li><b>02</b><span>Zero agressão física, verbal ou moral, incluindo diárias externas e o dia da mostra.</span></li>
+                    <li><b>03</b><span>Consentimento em tudo que envolve o corpo ou a imagem de um colega.</span></li>
+                    <li><b>04</b><span>Zero assédio, de qualquer tipo, com qualquer pessoa da produção.</span></li>
+                    <li><b>05</b><span>Nada de álcool ou outra substância no espaço da oficina ou em atividade da turma.</span></li>
+                </ul>
+            </div>
+            <p class="reveal d5" style="margin-top:38px;font-size:30px">Isso é o piso, não a pauta. <strong>O resto a gente escreve junto, agora.</strong></p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 22 · PERGUNTAS DE LEGISLADOR ============ -->
+    <section class="slide" data-min="13">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Agora vocês legislam</div>
+            <h1 class="wipe" style="margin-top:24px;font-size:112px">O QUE MAIS ENTRA NO ACORDO</h1>
+            <ul class="perguntas">
+                <li class="reveal d3"><span>01</span>O que vocês não aguentam numa sala de aula, e que dá pra evitar aqui desde já?</li>
+                <li class="reveal d4"><span>02</span>O que precisa existir aqui pra vocês topar errar na frente dos outros?</li>
+                <li class="reveal d5"><span>03</span>Quando alguém atrasar ou faltar, o que é justo a gente combinar?</li>
+                <li class="reveal d6"><span>04</span>Se um colega magoar o outro sem querer, como a gente resolve antes de virar mágoa guardada?</li>
+                <li class="reveal d7"><span>05</span>A gente vai filmar na rua, na casa dos outros. O que muda no comportamento da turma nesses dias?</li>
+            </ul>
+        </div>
+        <div class="foot">TUDO QUE FOR APROVADO ENTRA NO APP, AO VIVO, E VOCÊS ASSINAM</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 23 · CABINE DE DEPOIMENTO ============ -->
+    <section class="slide" data-min="13">
+        <div class="clapper-bar"></div>
+        <div class="ghost">REC</div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1" style="color:var(--rec)">● Uma pessoa por vez, sozinha, sem plateia</div>
+            <h1 class="wipe" style="font-size:172px">EU VIM PRA<br>ESSA OFICINA<br>PORQUE...</h1>
+            <p class="sub reveal d4">Você entra, senta, diz seu nome e completa a frase. Ninguém vê a resposta de ninguém. <em>Guarda essa resposta na memória: a gente volta nela.</em></p>
+        </div>
+        <div class="foot">CABINE DE DEPOIMENTO</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 24 · FECHAMENTO ============ -->
+    <section class="slide" data-min="1">
+        <div class="clapper-bar"></div>
+        <div class="big-slash"></div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">O que a gente acabou de fazer, sem perceber</div>
+            <h1 class="wipe" style="font-size:230px">ENQUADRAR<br>É ESCOLHER</h1>
+            <p class="sub reveal d4">Vocês escolheram uma foto pra representar vocês. Escolheram uma nota pra cada linguagem. Escolheram o que ia entrar no acordo. <strong>Isso é montagem, e vocês já estão fazendo.</strong></p>
+        </div>
+        <div class="foot">PRÓXIMO ENCONTRO · O QUE CABE NO QUADRO, E QUEM FICA DE FORA</div>
+        <div class="grain"></div>
+    </section>
+
+</main>
+</div>
+
+<!-- Contador, fora do palco -->
+<div class="deck-controls" id="deckCounter">01 / 16</div>
+
+<!-- Edição inline: passe o mouse no canto superior esquerdo, ou tecle E -->
+<div class="edit-hotzone" aria-hidden="true"></div>
+<button class="edit-toggle" id="editToggle" title="Modo de edição (E)">✏️</button>
+
+<script>
+/* ===========================================
+   CONTROLADOR DA APRESENTAÇÃO
+   Teclado, toque, roda do mouse e escala do palco.
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.stage = document.getElementById('deckStage');
+        this.counter = document.getElementById('deckCounter');
+        this.current = 0;
+        this.buildSlates();
+        this.setupStageScale();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.showSlide(0);
+    }
+
+    /* Monta a claquete de canto de cada slide a partir do data-min.
+       O acumulado é somado aqui, então nunca desencontra do tempo
+       individual, mesmo que você mude um slide de lugar ou de duração. */
+    buildSlates() {
+        let acumulado = 0;
+        this.slides.forEach((slide, i) => {
+            const min = parseInt(slide.dataset.min || '0', 10);
+            acumulado += min;
+            const el = document.createElement('div');
+            el.className = 'slate';
+            el.innerHTML =
+                `<span class="n">${String(i + 1).padStart(2, '0')}</span>` +
+                `<span class="t">${min}'</span>` +
+                `<span class="acc">${acumulado}' DE 90'</span>`;
+            slide.appendChild(el);
+        });
+        this.totalMin = acumulado;
+    }
+
+    /* O palco inteiro é escalado por um único transform:
+       o conteúdo nunca é reposicionado por tamanho de tela. */
+    setupStageScale() {
+        const scale = () => {
+            const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const x = (window.innerWidth - 1920 * factor) / 2;
+            const y = (window.innerHeight - 1080 * factor) / 2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+        };
+        scale();
+        window.addEventListener('resize', scale);
+    }
+
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') return;
+            switch (e.key) {
+                case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+                    e.preventDefault(); this.next(); break;
+                case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+                    e.preventDefault(); this.prev(); break;
+                case 'Home': e.preventDefault(); this.showSlide(0); break;
+                case 'End':  e.preventDefault(); this.showSlide(this.slides.length - 1); break;
+            }
+        });
+    }
+
+    setupTouchNav() {
+        let startX = 0, startY = 0;
+        document.addEventListener('touchstart', (e) => {
+            startX = e.changedTouches[0].clientX;
+            startY = e.changedTouches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+                dx < 0 ? this.next() : this.prev();
+            }
+        }, { passive: true });
+    }
+
+    setupWheelNav() {
+        let lock = false;
+        document.addEventListener('wheel', (e) => {
+            if (lock) return;
+            if (Math.abs(e.deltaY) < 24) return;
+            lock = true;
+            e.deltaY > 0 ? this.next() : this.prev();
+            setTimeout(() => { lock = false; }, 700);
+        }, { passive: true });
+    }
+
+    next() { this.showSlide(this.current + 1); }
+    prev() { this.showSlide(this.current - 1); }
+
+    /* Troca de slide sempre por .active/.visible, nunca por display. */
+    showSlide(index) {
+        this.current = Math.max(0, Math.min(index, this.slides.length - 1));
+        this.slides.forEach((slide, i) => {
+            const on = i === this.current;
+            slide.classList.toggle('active', on);
+            slide.classList.toggle('visible', on);
+        });
+        const n = String(this.current + 1).padStart(2, '0');
+        const t = String(this.slides.length).padStart(2, '0');
+        this.counter.textContent = `${n} / ${t}`;
+    }
+}
+
+/* ===========================================
+   EDIÇÃO INLINE
+   Clique em qualquer texto pra reescrever ao vivo.
+   Salva sozinho no navegador (localStorage).
+   =========================================== */
+class InlineEditor {
+    constructor(deck) {
+        this.deck = deck;
+        this.isActive = false;
+        this.key = 'tvf-encontro1-edits';
+        this.targets = 'h1, h2, h3, p, li, span, div.hint, div.obra, .eyebrow, .foot, .url-chip';
+        this.restore();
+    }
+
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        const btn = document.getElementById('editToggle');
+        btn.classList.toggle('active', this.isActive);
+        btn.classList.toggle('show', this.isActive);
+        document.querySelectorAll('.slide ' + this.targets).forEach((el, i) => {
+            if (el.querySelector(this.targets)) return; // só folhas de texto
+            el.setAttribute('contenteditable', this.isActive ? 'true' : 'false');
+            el.dataset.editId = el.dataset.editId || 'e' + i;
+            if (this.isActive) el.addEventListener('blur', () => this.save(), { once: true });
+        });
+        if (!this.isActive) this.save();
+    }
+
+    save() {
+        const data = {};
+        document.querySelectorAll('[data-edit-id]').forEach(el => { data[el.dataset.editId] = el.innerHTML; });
+        try { localStorage.setItem(this.key, JSON.stringify(data)); } catch (e) {}
+    }
+
+    restore() {
+        let data;
+        try { data = JSON.parse(localStorage.getItem(this.key) || '{}'); } catch (e) { return; }
+        const els = document.querySelectorAll('.slide ' + this.targets);
+        els.forEach((el, i) => {
+            const id = 'e' + i;
+            if (data[id] !== undefined && !el.querySelector(this.targets)) {
+                el.dataset.editId = id;
+                el.innerHTML = data[id];
+            }
+        });
+    }
+}
+
+const deck = new SlidePresentation();
+const editor = new InlineEditor(deck);
+
+/* Botão de edição: hover no canto, clique, ou tecla E.
+   Usa timeout de 400ms pra não sumir enquanto o mouse viaja até ele. */
+const hotzone = document.querySelector('.edit-hotzone');
+const editToggle = document.getElementById('editToggle');
+let hideTimeout = null;
+
+hotzone.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimeout);
+    editToggle.classList.add('show');
+});
+hotzone.addEventListener('mouseleave', () => {
+    hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400);
+});
+editToggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+editToggle.addEventListener('mouseleave', () => {
+    hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400);
+});
+editToggle.addEventListener('click', (e) => { e.stopPropagation(); editor.toggleEditMode(); });
+hotzone.addEventListener('click', () => editor.toggleEditMode());
+
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'e' || e.key === 'E') && !(e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true')) {
+        editor.toggleEditMode();
+    }
+});
+</script>
+</body>
+</html>

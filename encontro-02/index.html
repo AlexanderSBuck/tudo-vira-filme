@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tudo Vira Filme · Encontro 2</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+/* ===========================================
+   1. TOKENS DA IDENTIDADE "SLATE & PATCH"
+   =========================================== */
+:root {
+    --ink:        #14110D;
+    --ink-2:      #1E1A14;
+    --ink-3:      #26211A;
+    --chalk:      #F1ECE1;
+    --chalk-dim:  #B3A99A;
+    --chalk-faint:#7A7266;
+    --tape:       #F5760F;
+    --stamp:      #C6FF00;
+    --rec:        #E63946;
+    --line:       rgba(241,236,225,0.14);
+    --stage-bg:   #0A0806;
+    --slide-bg:   #14110D;
+
+    --font-display: 'Bebas Neue', 'Oswald', sans-serif;
+    --font-body:    'Source Sans 3', 'Helvetica Neue', sans-serif;
+    --font-mono:    'Space Mono', 'Courier New', monospace;
+
+    --size-mega:   240px;
+    --size-title:  150px;
+    --size-body:    34px;
+    --size-label:   22px;
+    --pad: 110px;
+
+    --snap:  cubic-bezier(0.16, 1, 0.3, 1);
+    --clack: cubic-bezier(0.86, 0, 0.07, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===========================================
+   2. VIEWPORT-BASE.CSS (PALCO FIXO 16:9)
+   =========================================== */
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-viewport { position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-stage { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; background:var(--slide-bg,#fff); }
+.slide { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--slide-bg,#fff); }
+.slide.active, .slide.visible { visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img, video, canvas, svg { max-width:100%; max-height:100%; }
+.deck-controls { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1000; }
+@media print {
+    html, body { width:1920px; height:auto; overflow:visible; background:#fff; }
+    .deck-viewport { position:static; overflow:visible; background:#fff; }
+    .deck-stage { position:static; width:auto; height:auto; transform:none !important; background:none; }
+    .slide { position:relative; display:block !important; visibility:visible !important; opacity:1 !important; pointer-events:auto !important; width:1920px; height:1080px; break-after:page; page-break-after:always; }
+    .slide:last-child { break-after:auto; page-break-after:auto; }
+    .deck-controls { display:none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; }
+}
+
+/* ===========================================
+   3. CHROME DO PALCO
+   =========================================== */
+.grain {
+    position:absolute; inset:-50%; width:200%; height:200%;
+    pointer-events:none; z-index:50; opacity:0.15;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    animation:grainShift 0.7s steps(4) infinite;
+}
+@keyframes grainShift {
+    0%{transform:translate(0,0)} 25%{transform:translate(-3%,2%)}
+    50%{transform:translate(2%,-3%)} 75%{transform:translate(-2%,-2%)} 100%{transform:translate(0,0)}
+}
+.clapper-bar {
+    position:absolute; top:0; left:0; height:22px; width:100%; z-index:40;
+    background:repeating-linear-gradient(-45deg, var(--tape) 0 34px, var(--ink-2) 34px 68px);
+    transform:scaleX(0); transform-origin:left center; transition:transform 0.75s var(--clack);
+}
+.slide.visible .clapper-bar { transform:scaleX(1); }
+
+/* Claquete de canto: número, tempo do slide e minuto acumulado.
+   Gerada por JS a partir do data-min de cada <section class="slide">. */
+.slate { position:absolute; top:58px; right:var(--pad); z-index:41; text-align:right; font-family:var(--font-mono); line-height:1.3; }
+.slate .n   { display:block; font-size:var(--size-label); letter-spacing:0.22em; color:var(--chalk-faint); }
+.slate .t   { display:block; font-size:32px; font-weight:700; letter-spacing:0.06em; color:var(--tape); }
+.slate .acc { display:block; font-size:17px; letter-spacing:0.16em; color:rgba(241,236,225,0.26); }
+
+/* ===========================================
+   4. ANIMAÇÃO DE ENTRADA
+   =========================================== */
+.reveal { opacity:0; transform:translateY(38px); transition:opacity 0.7s var(--snap), transform 0.7s var(--snap); }
+.slide.visible .reveal { opacity:1; transform:translateY(0); }
+.slide.visible .d1{transition-delay:.10s} .slide.visible .d2{transition-delay:.20s}
+.slide.visible .d3{transition-delay:.30s} .slide.visible .d4{transition-delay:.40s}
+.slide.visible .d5{transition-delay:.50s} .slide.visible .d6{transition-delay:.60s}
+.slide.visible .d7{transition-delay:.70s}
+.wipe { clip-path:inset(0 100% 0 0); transition:clip-path 0.9s var(--clack); }
+.slide.visible .wipe { clip-path:inset(0 0 0 0); }
+
+/* ===========================================
+   5. COMPONENTES DE CONTEÚDO
+   =========================================== */
+.tape-tag {
+    display:inline-block; background:var(--tape); color:var(--ink);
+    font-family:var(--font-display); font-size:34px; letter-spacing:0.06em;
+    padding:10px 28px 6px; transform:rotate(-1.2deg);
+}
+.eyebrow { font-family:var(--font-mono); font-size:var(--size-label); letter-spacing:0.3em; color:var(--tape); text-transform:uppercase; }
+h1,h2,h3 {
+    font-family:var(--font-display); font-weight:400; color:var(--chalk);
+    /* folga obrigatória: acentos de caixa alta (Ã, É, Ó) são cortados abaixo de 0.96 */
+    line-height:0.96; padding-top:0.06em; letter-spacing:0.01em;
+}
+h1 { font-size:var(--size-title); }
+p, li { font-family:var(--font-body); font-size:var(--size-body); color:var(--chalk-dim); line-height:1.45; }
+.lead { color:var(--chalk); font-size:40px; }
+em { color:var(--tape); font-style:italic; }
+strong { color:var(--chalk); font-weight:700; }
+.pad { position:absolute; inset:0; padding:150px var(--pad) 96px; display:flex; flex-direction:column; }
+.foot { position:absolute; left:var(--pad); bottom:58px; max-width:1300px; font-family:var(--font-mono); font-size:var(--size-label); letter-spacing:0.18em; color:var(--chalk-faint); }
+.impact { align-items:flex-start; justify-content:center; }
+.impact h1 { font-size:var(--size-mega); line-height:0.92; max-width:1500px; }
+.impact .sub { font-size:40px; margin-top:44px; max-width:1300px; }
+.ghost { position:absolute; right:40px; bottom:-110px; font-family:var(--font-display); font-size:620px; line-height:0.7; color:rgba(241,236,225,0.045); z-index:0; pointer-events:none; }
+
+/* ===========================================
+   6. AS TRÊS CAMADAS
+   Cada plano aparece três vezes: esquema, referência e obra do educador.
+   =========================================== */
+/* padding-bottom é zona de segurança: o contador de slides fica fixo no canto
+   inferior direito da janela, e sem essa folga a legenda da terceira coluna
+   passa por baixo dele. */
+/* REGRA INEGOCIÁVEL DESTE DECK: toda imagem de exemplo aparece em 16:9,
+   inteira, sem corte. É uma aula sobre enquadramento, então recortar o quadro
+   de quem filmou seria ensinar o contrário do que se fala. Por isso
+   aspect-ratio:16/9 + object-fit:contain em toda imagem de exemplo.
+   O padding-bottom é zona de segurança contra o contador fixo da janela. */
+.camadas {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:30px;
+    margin-top:auto; margin-bottom:auto; padding-bottom:44px;
+}
+.camada { display:flex; flex-direction:column; min-width:0; }
+.camada .rot {
+    font-family:var(--font-mono); font-size:19px; letter-spacing:0.18em;
+    color:var(--chalk-faint); margin-bottom:12px; text-transform:uppercase;
+}
+.camada .rot b { color:var(--tape); font-weight:400; }
+/* ===== slide de vídeo =====
+   Vídeo em aula é um momento, não um enfeite dentro de um layout: ocupa o
+   palco inteiro, tem som, e quem aperta o play é o educador. A capa some no
+   play e volta no pause, pra a tarefa continuar à mão se alguém perguntar. */
+.slide-video { background:#000; }
+.slide-video .video-aula {
+    position:absolute; inset:0; width:1920px; height:1080px;
+    object-fit:contain; background:#000;
+}
+.video-capa {
+    position:absolute; inset:0; z-index:2;
+    background:linear-gradient(180deg, rgba(20,17,13,0.94) 0%, rgba(20,17,13,0.88) 55%, rgba(20,17,13,0.96) 100%);
+    transition:opacity 0.35s ease;
+}
+.slide-video.tocando .video-capa { opacity:0; pointer-events:none; }
+.botao-play {
+    margin-top:46px; font-family:var(--font-mono); font-size:28px; letter-spacing:0.18em;
+    color:var(--ink); background:var(--stamp); border:0; padding:22px 44px;
+    cursor:pointer; transition:transform 0.15s ease;
+}
+.botao-play:hover, .botao-play:focus-visible { transform:translateY(-3px); outline:2px solid var(--chalk); outline-offset:4px; }
+
+.camada img, .camada .aguardando {
+    width:100%; aspect-ratio:16/9; height:auto;
+    object-fit:contain; background:#0A0806;
+    border:1px solid rgba(241,236,225,0.1);
+}
+/* espaço reservado das imagens do Gemini: some sozinho quando o arquivo existir */
+.camada .aguardando {
+    border:3px dashed rgba(241,236,225,0.24); background:var(--ink-2);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    font-family:var(--font-mono); font-size:19px; letter-spacing:0.14em; color:var(--chalk-faint); text-align:center; padding:0 22px;
+}
+.camada .aguardando span { color:var(--tape); font-size:26px; }
+.legenda { font-family:var(--font-body); font-size:23px; color:var(--chalk-dim); margin-top:14px; line-height:1.3; }
+
+/* o que cada plano FAZ, além de onde ele corta: reforço escrito, fixo,
+   na mesma posição nos seis slides */
+.conceito-plano {
+    margin-top:26px; border-top:2px solid var(--tape); padding-top:20px;
+    display:flex; gap:26px; align-items:baseline;
+}
+.conceito-plano b {
+    font-family:var(--font-mono); font-size:18px; letter-spacing:0.2em;
+    color:var(--tape); flex-shrink:0; padding-top:4px;
+}
+.conceito-plano span { font-family:var(--font-body); font-size:29px; color:var(--chalk); line-height:1.35; }
+
+/* faixa com a sigla gigante à esquerda do slide de plano */
+.plano-head { display:flex; align-items:baseline; gap:30px; }
+.plano-head .sigla { font-family:var(--font-display); font-size:150px; color:var(--tape); line-height:0.9; }
+.plano-head .nome  { font-family:var(--font-display); font-size:72px; color:var(--chalk); line-height:0.95; }
+.plano-head .def   { font-family:var(--font-body); font-size:30px; color:var(--chalk-dim); margin-left:auto; max-width:640px; text-align:right; }
+
+/* ===========================================
+   7. ESCALA COMPLETA (visão geral)
+   =========================================== */
+.escala { display:grid; grid-template-columns:repeat(6,1fr); gap:18px; margin-top:auto; margin-bottom:auto; }
+.escala .item { display:flex; flex-direction:column; min-width:0; }
+.escala .item img, .escala .item .aguardando {
+    width:100%; aspect-ratio:16/9; height:auto; object-fit:contain;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.1);
+}
+.escala .item .aguardando { border:2px dashed rgba(241,236,225,0.2); background:var(--ink-2); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:30px; color:var(--chalk-faint); }
+.escala .sg { font-family:var(--font-display); font-size:52px; color:var(--tape); line-height:1; margin-top:14px; }
+.escala .nm { font-family:var(--font-mono); font-size:16px; letter-spacing:0.12em; color:var(--chalk-dim); }
+
+/* ===========================================
+   8. COMPOSIÇÃO: grade de terços sobre a imagem
+   =========================================== */
+/* duas composições lado a lado: uma que segue os terços e uma que não */
+.duas-comp { display:grid; grid-template-columns:1fr 1fr; gap:42px; margin-top:auto; margin-bottom:auto; }
+.comp-um { display:flex; flex-direction:column; min-width:0; }
+/* também 16:9 inteiro: a grade de terços só faz sentido sobre o quadro real */
+.comp-img { position:relative; width:100%; aspect-ratio:16/9; }
+.comp-img img { width:100%; height:100%; object-fit:contain; background:#0A0806; }
+.comp-img svg { position:absolute; inset:0; width:100%; height:100%; }
+
+/* mapa dos eixos: seis controles da câmera, e em que encontro cada um cai.
+   Existe pra impedir a conclusão errada de que linguagem audiovisual são
+   seis planos. O eixo de hoje fica marcado com .hoje. */
+/* slide da revelação: a origem do exercício só aparece depois que ele acabou,
+   pra referência nenhuma contaminar a escolha de plano dos alunos. */
+.revela { display:grid; grid-template-columns:0.85fr 1.15fr; gap:56px; margin-top:30px; align-items:start; }
+.revela .quadro { width:100%; aspect-ratio:4/3; height:auto; object-fit:contain; background:#0A0806; border:1px solid rgba(241,236,225,0.12); }
+.revela .cap { font-family:var(--font-mono); font-size:16px; letter-spacing:0.12em; color:var(--chalk-faint); margin-top:12px; }
+.revela p { font-family:var(--font-body); font-size:28px; line-height:1.42; color:var(--chalk-dim); margin:0 0 20px; }
+.revela p strong { color:var(--chalk); }
+.revela .nota { border-left:4px solid var(--tape); padding-left:22px; font-size:26px; color:var(--chalk-dim); margin-bottom:0; }
+
+.eixos { display:grid; grid-template-columns:1fr 1fr; gap:26px 54px; margin-top:34px; }
+.eixos div { border-top:4px solid rgba(241,236,225,0.18); padding-top:18px; display:grid; grid-template-columns:1fr auto; gap:4px 20px; align-items:baseline; }
+.eixos b { font-family:var(--font-display); font-size:46px; color:var(--chalk); line-height:1; }
+.eixos em { font-family:var(--font-mono); font-size:17px; letter-spacing:0.12em; color:var(--chalk-faint); font-style:normal; text-align:right; white-space:nowrap; }
+.eixos span { grid-column:1 / -1; font-family:var(--font-body); font-size:26px; color:var(--chalk-dim); line-height:1.35; }
+.eixos .hoje { border-top-color:var(--tape); }
+.eixos .hoje b { color:var(--tape); }
+.eixos .hoje em { color:var(--stamp); }
+
+.tres-regras { display:grid; grid-template-columns:repeat(3,1fr); gap:40px; margin-top:auto; margin-bottom:auto; padding-bottom:40px; }
+.tres-regras div { border-top:5px solid var(--tape); padding-top:26px; }
+.tres-regras b { display:block; font-family:var(--font-display); font-size:50px; color:var(--chalk); line-height:1; margin-bottom:18px; }
+.tres-regras span { font-family:var(--font-body); font-size:29px; color:var(--chalk-dim); line-height:1.4; }
+
+/* ===========================================
+   9. O TEXTO DO EXERCÍCIO, NUMERADO
+   =========================================== */
+.texto-num { display:grid; grid-template-columns:1fr 1fr; gap:14px 60px; margin-top:36px; }
+.texto-num div { display:flex; gap:20px; align-items:baseline; }
+.texto-num b { font-family:var(--font-mono); font-size:24px; color:var(--tape); flex-shrink:0; }
+.texto-num span { font-family:var(--font-body); font-size:31px; color:var(--chalk); line-height:1.3; }
+
+/* ===========================================
+   10. REGRAS E CRONÔMETRO
+   =========================================== */
+.regras { list-style:none; display:grid; gap:24px; margin-top:44px; }
+.regras li { display:flex; gap:26px; align-items:flex-start; border-left:4px solid var(--tape); padding-left:26px; font-size:33px; color:var(--chalk); }
+.regras li span { font-family:var(--font-mono); font-size:22px; color:var(--chalk-faint); padding-top:6px; flex-shrink:0; }
+
+.timer-wrap { display:flex; align-items:center; justify-content:center; flex:1; flex-direction:column; gap:16px; }
+.timer {
+    font-family:var(--font-mono); font-weight:700; font-size:230px; line-height:1;
+    color:var(--tape); letter-spacing:0.02em; cursor:pointer; user-select:none;
+    font-variant-numeric:tabular-nums;
+}
+.timer.parado { color:var(--chalk-faint); }
+.timer.acabando { color:var(--rec); }
+.timer-dica { font-family:var(--font-mono); font-size:24px; letter-spacing:0.2em; color:var(--chalk-faint); }
+
+/* régua de consulta na tela do cronômetro: durante a rodagem eles precisam
+   lembrar quais são os seis planos sem parar o exercício pra perguntar */
+.regua { display:grid; grid-template-columns:repeat(6,1fr); gap:16px; margin-top:auto; padding-bottom:44px; }
+.regua .item { display:flex; flex-direction:column; min-width:0; }
+.regua img { width:100%; aspect-ratio:16/9; height:auto; object-fit:contain; background:#0A0806; border:1px solid rgba(241,236,225,0.12); }
+.regua .sg { font-family:var(--font-display); font-size:40px; color:var(--tape); line-height:1; margin-top:10px; }
+.regua .nm { font-family:var(--font-mono); font-size:14px; letter-spacing:0.1em; color:var(--chalk-faint); }
+
+/* ===========================================
+   10b. SORTEADOR DE DUPLAS
+   Guarda a turma e o histórico em localStorage sob a chave 'tvf-duplas',
+   que é do CURSO e não deste encontro: qualquer deck futuro que use este
+   mesmo componente lê o mesmo histórico e continua evitando repetição.
+   =========================================== */
+.sorteio { display:flex; gap:44px; margin-top:auto; margin-bottom:auto; padding-bottom:40px; min-height:0; }
+.sorteio-esq { flex:1.5; display:flex; flex-direction:column; min-width:0; }
+.sorteio-dir { width:430px; display:flex; flex-direction:column; gap:14px; }
+
+/* uma dupla por linha: nome completo de aluno é longo, e em duas colunas
+   ("Anilton Candido Trancoso + Douglas Pereira Coutinho") o texto era cortado */
+.duplas { display:grid; grid-template-columns:1fr; gap:16px; align-content:start; }
+.dupla {
+    background:var(--ink-2); border-left:5px solid var(--tape);
+    padding:15px 20px; display:flex; align-items:center; gap:16px;
+}
+.dupla .num { font-family:var(--font-mono); font-size:17px; color:var(--chalk-faint); width:26px; flex-shrink:0; }
+.dupla .quem { display:flex; align-items:center; gap:10px; min-width:0; }
+.dupla .av {
+    width:46px; height:46px; border-radius:50%; object-fit:cover; flex-shrink:0;
+    background:var(--ink-3); display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-size:20px; color:var(--tape); border:2px solid var(--tape);
+}
+.dupla .nome { font-family:var(--font-body); font-size:25px; color:var(--chalk); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dupla .mais { font-family:var(--font-mono); font-size:20px; color:var(--tape); flex-shrink:0; }
+.dupla.trio { border-left-color:var(--stamp); }
+
+.sorteio-vazio { font-family:var(--font-body); font-size:28px; color:var(--chalk-faint); padding:30px 0; }
+.btn-sortear {
+    background:var(--tape); color:var(--ink); border:none; cursor:pointer;
+    font-family:var(--font-display); font-size:40px; letter-spacing:0.04em;
+    padding:16px 10px 12px; width:100%;
+}
+.btn-sortear:disabled { background:var(--ink-3); color:var(--chalk-faint); cursor:not-allowed; }
+.btn-menor {
+    background:transparent; color:var(--chalk-dim); border:1px solid var(--line);
+    font-family:var(--font-mono); font-size:16px; letter-spacing:0.1em;
+    padding:11px 8px; cursor:pointer; width:100%;
+}
+.btn-menor:hover { border-color:var(--tape); color:var(--chalk); }
+.add-linha { display:flex; gap:8px; }
+.add-linha input[type=text] {
+    flex:1; min-width:0; background:var(--ink-2); border:1px solid var(--line); color:var(--chalk);
+    font-family:var(--font-body); font-size:20px; padding:11px 12px;
+}
+.add-linha input[type=text]:focus { outline:2px solid var(--tape); }
+.add-linha label {
+    background:var(--ink-2); border:1px dashed var(--chalk-faint); color:var(--chalk-dim);
+    font-family:var(--font-mono); font-size:15px; padding:11px 12px; cursor:pointer; flex-shrink:0;
+}
+.turma-chips { display:flex; flex-wrap:wrap; gap:8px; max-height:196px; overflow-y:auto; }
+.chip {
+    display:flex; align-items:center; gap:8px; background:var(--ink-2);
+    border:1px solid var(--line); padding:5px 10px 5px 5px;
+    font-family:var(--font-body); font-size:19px; color:var(--chalk-dim);
+}
+.chip img, .chip .ini {
+    width:28px; height:28px; border-radius:50%; object-fit:cover; background:var(--ink-3);
+    display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:12px; color:var(--tape);
+}
+.chip button { background:none; border:none; color:var(--chalk-faint); cursor:pointer; font-size:17px; padding:0 0 0 3px; }
+.chip button:hover { color:var(--rec); }
+.sorteio-info { font-family:var(--font-mono); font-size:16px; letter-spacing:0.1em; color:var(--chalk-faint); line-height:1.7; }
+.sorteio-info b { color:var(--stamp); font-weight:400; }
+.sorteio-alerta { font-family:var(--font-body); font-size:19px; color:var(--rec); }
+
+/* ===========================================
+   11. CHROME FORA DO PALCO
+   =========================================== */
+.deck-controls {
+    left:auto; right:26px; bottom:20px; transform:none;
+    font-family:var(--font-mono); font-size:13px; letter-spacing:0.2em;
+    color:rgba(241,236,225,0.45); background:rgba(20,17,13,0.8);
+    padding:7px 16px; border:1px solid rgba(241,236,225,0.12); user-select:none;
+}
+.edit-hotzone { position:fixed; top:0; left:0; width:80px; height:80px; z-index:10000; cursor:pointer; }
+.edit-toggle {
+    position:fixed; top:18px; left:18px; z-index:10001;
+    background:var(--tape); color:var(--ink); border:none; border-radius:4px;
+    font-size:18px; padding:9px 13px; cursor:pointer; opacity:0; pointer-events:none; transition:opacity .3s ease;
+}
+.edit-toggle.show, .edit-toggle.active { opacity:1; pointer-events:auto; }
+.edit-toggle.active { background:var(--stamp); }
+[contenteditable="true"] { outline:2px dashed var(--stamp); outline-offset:6px; cursor:text; }
+</style>
+</head>
+<body>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+    <!-- ============ 01 · ABERTURA ============ -->
+    <section class="slide title-slide active visible" data-min="1">
+        <div class="clapper-bar"></div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Encontro 2 de 32 · Cine Teatro Ribalta</div>
+            <h1 class="wipe" style="font-size:176px">O QUE CABE<br>NO QUADRO</h1>
+            <p class="sub reveal d4">E quem fica de fora.</p>
+        </div>
+        <div class="foot">VER · ESCOLHER · FAZER · MOSTRAR</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 02 · RODA DE ABERTURA ============ -->
+    <section class="slide" data-min="4">
+        <div class="clapper-bar"></div>
+        <div class="ghost">02</div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Roda de abertura</div>
+            <h1 class="wipe" style="font-size:150px">O QUE FICOU<br>DA PRIMEIRA<br>AULA?</h1>
+            <p class="sub reveal d4">Uma coisa só, a primeira que vier na cabeça.</p>
+        </div>
+        <div class="foot">TODO MUNDO FALA, INCLUSIVE EU</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 03 · A ESCALA INTEIRA ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Um controle só da câmera: o quanto do assunto cabe no quadro</div>
+            <h1 class="wipe" style="margin-top:22px;font-size:112px">SEIS JEITOS DE OLHAR A MESMA PESSOA</h1>
+            <div class="escala">
+                <div class="item reveal d3"><img data-camada1="pg" alt=""><div class="sg">PG</div><div class="nm">PLANO GERAL</div></div>
+                <div class="item reveal d3"><img data-camada1="pc" alt=""><div class="sg">PC</div><div class="nm">PLANO CONJUNTO</div></div>
+                <div class="item reveal d4"><img data-camada1="pa" alt=""><div class="sg">PA</div><div class="nm">PLANO AMERICANO</div></div>
+                <div class="item reveal d4"><img data-camada1="pm" alt=""><div class="sg">PM</div><div class="nm">PLANO MÉDIO</div></div>
+                <div class="item reveal d5"><img data-camada1="pp" alt=""><div class="sg">PP</div><div class="nm">PRIMEIRO PLANO</div></div>
+                <div class="item reveal d5"><img data-camada1="pd" alt=""><div class="sg">PD</div><div class="nm">PLANO DETALHE</div></div>
+            </div>
+            <p class="reveal d6" style="margin-top:34px;font-size:30px">Mesma pessoa, mesmo lugar, mesma luz, mesma roupa. <strong>Só mudou o quanto dela cabe no quadro.</strong> Hoje a gente mexe só nessa régua. Os outros controles chegam nos próximos encontros.</p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 04 · PG ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="plano-head">
+                <span class="sigla wipe">PG</span>
+                <span class="nome reveal d2">PLANO GERAL</span>
+                <span class="def reveal d3">O lugar é o assunto. Se tiver gente, ela é pequena.</span>
+            </div>
+            <div class="camadas">
+                <div class="camada reveal d4">
+                    <div class="rot"><b>01</b> · O ESQUEMA</div>
+                    <img data-camada1="pg" alt="">
+                    <div class="legenda">A régua, sem distração</div>
+                </div>
+                <div class="camada reveal d5">
+                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
+                    <img src="assets/cdb-pg.jpg" alt="Plano geral em Central do Brasil">
+                    <div class="legenda">Walter Salles, 1998</div>
+                </div>
+                <div class="camada reveal d6">
+                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
+                    <img src="assets/geral.jpg" alt="Plano geral em Encruzilhadas do Caos">
+                    <div class="legenda">O primeiro plano do filme, antes de qualquer pessoa</div>
+                </div>
+            </div>
+            <div class="conceito-plano reveal d7">
+                <b>O QUE ELE FAZ</b><span>Situa e mede. Diz onde a cena acontece e qual o tamanho de quem está ali dentro. Às vezes nem tem ninguém: aí ele apresenta o mundo antes de apresentar as pessoas.</span>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 05 · PC ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="plano-head">
+                <span class="sigla wipe">PC</span>
+                <span class="nome reveal d2">PLANO CONJUNTO</span>
+                <span class="def reveal d3">Gente o bastante no quadro pra dar pra ler o que fazem e como se relacionam.</span>
+            </div>
+            <div class="camadas">
+                <div class="camada reveal d4">
+                    <div class="rot"><b>01</b> · O ESQUEMA</div>
+                    <img data-camada1="pc" alt="">
+                    <div class="legenda">Os três no mesmo quadro, com o espaço entre eles visível</div>
+                </div>
+                <div class="camada reveal d5">
+                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
+                    <img src="assets/cdb-pc.jpg" alt="Plano conjunto em Central do Brasil">
+                    <div class="legenda">A rua entre as casas conta tanto quanto os dois</div>
+                </div>
+                <div class="camada reveal d6">
+                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
+                    <img src="assets/conjunto.jpg" alt="Plano conjunto em Encruzilhadas do Caos">
+                    <div class="legenda">Seis pessoas, e a posição de cada uma já conta a cena</div>
+                </div>
+            </div>
+            <div class="conceito-plano reveal d7">
+                <b>O QUE ELE FAZ</b><span>Mostra a ação e a relação. É o plano em que a distância entre as pessoas vira informação: quem está perto de quem, quem avança, quem recua.</span>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 06 · PA ============ -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="plano-head">
+                <span class="sigla wipe">PA</span>
+                <span class="nome reveal d2">PLANO AMERICANO</span>
+                <span class="def reveal d3">Corta acima do joelho. Nasceu no faroeste, pra caber o rosto e o coldre no mesmo quadro.</span>
+            </div>
+            <div class="camadas">
+                <div class="camada reveal d4">
+                    <div class="rot"><b>01</b> · O ESQUEMA</div>
+                    <img data-camada1="pa" alt="">
+                    <div class="legenda">O corte no joelho</div>
+                </div>
+                <div class="camada reveal d5">
+                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
+                    <div class="aguardando" style="border-color:var(--tape)">
+                        <span>NÃO TEM</span>
+                        E esse é o único degrau da escada<br>que a gente nunca achou aqui
+                    </div>
+                    <div class="legenda">Drama intimista vive de rosto e de paisagem</div>
+                </div>
+                <div class="camada reveal d6">
+                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
+                    <img src="assets/americano.jpg" alt="Plano americano em Encruzilhadas do Caos">
+                    <div class="legenda">Corta na coxa: cabe o rosto e cabe a arma, no mesmo quadro</div>
+                </div>
+            </div>
+            <div class="conceito-plano reveal d7">
+                <b>O QUE ELE FAZ</b><span>Dá postura e domínio. A pessoa ocupa o quadro de pé, inteira o bastante pra impor presença. É o plano do confronto e da atitude.</span>
+            </div>
+            <!-- observação de nomenclatura: é o único degrau da escada com
+                 nacionalidade no nome, e ela foi dada de fora. Serve pra turma
+                 entender que a escala é convenção humana, não lei da natureza. -->
+            <p class="reveal d7" style="margin-top:24px;font-size:27px"><strong>Repara no nome.</strong> Quem batizou foram os franceses, olhando o cinema dos Estados Unidos entre 1910 e 1940. Em inglês <strong>não existe "American shot"</strong>: lá se diz <strong>cowboy shot</strong>, ou o termo neutro <em>medium long shot</em>. E os dois nem cortam no mesmo lugar, um na coxa e outro no joelho. É o único plano da escada com nacionalidade no nome, e o apelido veio de fora.</p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 07 · PM ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="plano-head">
+                <span class="sigla wipe">PM</span>
+                <span class="nome reveal d2">PLANO MÉDIO</span>
+                <span class="def reveal d3">Corta na cintura. O mais neutro dos seis, e por isso o mais usado.</span>
+            </div>
+            <div class="camadas">
+                <div class="camada reveal d4">
+                    <div class="rot"><b>01</b> · O ESQUEMA</div>
+                    <img data-camada1="pm" alt="">
+                    <div class="legenda">O corte na cintura</div>
+                </div>
+                <div class="camada reveal d5">
+                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
+                    <img src="assets/cdb-pm.jpg" alt="Plano médio em Central do Brasil">
+                    <div class="legenda">Da cintura pra cima, e ainda dá pra ver o quarto em volta</div>
+                </div>
+                <div class="camada reveal d6">
+                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
+                    <img src="assets/medio.jpg" alt="Plano médio em Encruzilhadas do Caos">
+                    <div class="legenda">Corpo até a cintura, com a torre atrás situando o lugar</div>
+                </div>
+            </div>
+                <div class="conceito-plano reveal d7">
+                <b>O QUE ELE FAZ</b><span>É o plano da conversa. Fica na distância em que a gente costuma olhar alguém falando com a gente, e por isso quase desaparece.</span>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 08 · PP ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="plano-head">
+                <span class="sigla wipe">PP</span>
+                <span class="nome reveal d2">PRIMEIRO PLANO</span>
+                <span class="def reveal d3">Só o rosto. Não tem pra onde fugir, nem pra quem filma nem pra quem é filmado.</span>
+            </div>
+            <div class="camadas">
+                <div class="camada reveal d4">
+                    <div class="rot"><b>01</b> · O ESQUEMA</div>
+                    <img data-camada1="pp" alt="">
+                    <div class="legenda">Cabeça e ombros</div>
+                </div>
+                <div class="camada reveal d5">
+                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
+                    <img src="assets/cdb-pp.jpg" alt="Primeiro plano em Central do Brasil">
+                    <div class="legenda">Fernanda Montenegro. Foi esse plano que foi ao Oscar</div>
+                </div>
+                <div class="camada reveal d6">
+                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
+                    <img src="assets/close.jpg" alt="Primeiro plano em Encruzilhadas do Caos">
+                    <div class="legenda">O rosto decide sozinho o que a cena é</div>
+                </div>
+            </div>
+            <div class="conceito-plano reveal d7">
+                <b>O QUE ELE FAZ</b><span>Tira o mundo e deixa o sentimento. Sem contexto pra fugir, quem assiste é obrigado a lidar com o que está no rosto.</span>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 09 · PD ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="plano-head">
+                <span class="sigla wipe" style="color:var(--stamp)">PD</span>
+                <span class="nome reveal d2">PLANO DETALHE</span>
+                <span class="def reveal d3">Uma parte só. O objeto vira o assunto da cena inteira.</span>
+            </div>
+            <div class="camadas">
+                <div class="camada reveal d4">
+                    <div class="rot"><b>01</b> · O ESQUEMA</div>
+                    <img data-camada1="pd" alt="">
+                    <div class="legenda">Uma parte, e nada além dela</div>
+                </div>
+                <div class="camada reveal d5">
+                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
+                    <img src="assets/cdb-pd.jpg" alt="Plano detalhe em Central do Brasil">
+                    <div class="legenda">A mão escrevendo a carta. A premissa do filme inteiro cabe aqui</div>
+                </div>
+                <div class="camada reveal d6">
+                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
+                    <img src="assets/detalhe.jpg" alt="Plano detalhe em Encruzilhadas do Caos">
+                    <div class="legenda">A oferenda. O plano mais fechado é o mais carregado</div>
+                </div>
+            </div>
+            <div class="conceito-plano reveal d7">
+                <b>O QUE ELE FAZ</b><span>Aponta o dedo. Diz "isso aqui importa" e cria expectativa, porque esconde tudo que está em volta.</span>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 10 · A ESCALA CORRENDO ============
+         O único vídeo da aula, e ele vem exatamente aqui: os seis planos
+         acabaram de ser nomeados um a um, parados, e ainda não foram usados.
+         A abertura do Encruzilhadas percorre a escala inteira em ordem, em
+         92 segundos, e não precisa de contexto de enredo porque é o começo
+         do filme. A tarefa vai na tela ANTES do play: sem tarefa, vira
+         sessão de cinema; com tarefa, vira leitura. -->
+    <section class="slide slide-video" data-min="4">
+        <img class="video-aula" src="assets/abertura-poster.jpg" alt="Abertura de Encruzilhadas do Caos">
+        <div class="video-capa">
+            <div class="pad impact">
+                <div class="eyebrow">Agora os seis, correndo</div>
+                <h1 class="wipe" style="font-size:120px">ESCREVE A ORDEM<br>QUE VOCÊ VIR</h1>
+                <p class="sub">Abertura do Encruzilhadas do Caos. Noventa e dois segundos,<br>e a escala inteira passa em ordem. Anota só as siglas.</p>
+                <div class="botao-play" style="background:transparent;color:var(--chalk-faint);border:2px dashed rgba(241,236,225,0.3);padding:18px 34px">O VÍDEO ENTRA AQUI EM BREVE</div>
+            </div>
+            <div class="foot">LUZ APAGADA · SOM ALTO · NINGUÉM COMENTA ANTES DO FIM</div>
+        </div>
+        <div class="clapper-bar"></div>
+    </section>
+
+    <!-- ============ 11 · A GRADE DOS TERÇOS ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Escolhido o plano, ainda falta decidir onde a pessoa fica</div>
+            <h1 class="wipe" style="margin-top:22px;font-size:104px">A GRADE QUE NINGUÉM VÊ</h1>
+            <div class="duas-comp">
+                <div class="comp-um reveal d3">
+                    <div class="comp-img">
+                        <img src="assets/cdb-pp.jpg" alt="Primeiro plano fora do centro, com grade de terços">
+                        <svg viewBox="0 0 300 169" preserveAspectRatio="none">
+                            <g stroke="#F5760F" stroke-width="0.7" opacity="0.85">
+                                <line x1="100" y1="0" x2="100" y2="169"/><line x1="200" y1="0" x2="200" y2="169"/>
+                                <line x1="0" y1="56.3" x2="300" y2="56.3"/><line x1="0" y1="112.6" x2="300" y2="112.6"/>
+                            </g>
+                            <g fill="#C6FF00">
+                                <circle cx="100" cy="56.3" r="2.4"/><circle cx="200" cy="56.3" r="2.4"/>
+                                <circle cx="100" cy="112.6" r="2.4"/><circle cx="200" cy="112.6" r="2.4"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="legenda"><strong>Segue a regra.</strong> O rosto dela cai em cima de um cruzamento, e sobra ar do outro lado.</div>
+                </div>
+                <div class="comp-um reveal d5">
+                    <div class="comp-img">
+                        <img src="assets/close.jpg" alt="Primeiro plano centralizado, com grade de terços">
+                        <svg viewBox="0 0 300 169" preserveAspectRatio="none">
+                            <g stroke="#F5760F" stroke-width="0.7" opacity="0.85">
+                                <line x1="100" y1="0" x2="100" y2="169"/><line x1="200" y1="0" x2="200" y2="169"/>
+                                <line x1="0" y1="56.3" x2="300" y2="56.3"/><line x1="0" y1="112.6" x2="300" y2="112.6"/>
+                            </g>
+                            <g fill="#C6FF00">
+                                <circle cx="100" cy="56.3" r="2.4"/><circle cx="200" cy="56.3" r="2.4"/>
+                                <circle cx="100" cy="112.6" r="2.4"/><circle cx="200" cy="112.6" r="2.4"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="legenda"><strong>Quebra a regra, de propósito.</strong> Último plano do filme, centralizado e frontal, pra bater de frente com quem assiste.</div>
+                </div>
+            </div>
+            <p class="reveal d7" style="margin-top:26px;font-size:31px">A regra dos terços não é lei. <strong>Ela existe pra você saber o que está fazendo quando resolver não seguir.</strong></p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 12 · AS OUTRAS TRÊS REGRAS ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Três coisas que a turma vai reparar hoje, filmando</div>
+            <h1 class="wipe" style="margin-top:22px;font-size:104px">O AR EM VOLTA DA PESSOA</h1>
+            <div class="tres-regras">
+                <div class="reveal d3"><b>ESPAÇO DE CABEÇA</b><span>A folga entre o topo da cabeça e a borda de cima. Pouca sufoca. Muita afunda a pessoa no quadro e faz ela parecer pequena.</span></div>
+                <div class="reveal d5"><b>ESPAÇO DE OLHAR</b><span>Se ela olha pra direita, deixa sobrar espaço à direita. Sem isso, parece que ela vai bater na borda do quadro.</span></div>
+                <div class="reveal d7"><b>LINHA DO HORIZONTE</b><span>Torta sem querer é erro. Torta de propósito é intenção. As duas se parecem na tela, e só quem filmou sabe qual das duas foi.</span></div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 13 · O DESAFIO ============ -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="ghost">REC</div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Agora vocês</div>
+            <h1 class="wipe" style="font-size:190px">O HUMANO<br>PERFEITO</h1>
+            <p class="sub reveal d4">Um texto descreve uma pessoa de fora, frase por frase, como quem apresenta ela pra alguém que nunca viu. <em>Vocês vão filmar esse texto, e cada frase vira um plano.</em></p>
+        </div>
+        <div class="foot">SEM CENÁRIO · SEM FIGURINO · SÓ O QUADRO DECIDE</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 14 · SORTEIO DAS DUPLAS ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Quem filma com quem</div>
+            <h1 class="wipe" style="margin-top:20px;font-size:96px">AS DUPLAS DE HOJE</h1>
+            <div class="sorteio">
+                <div class="sorteio-esq reveal d3">
+                    <div class="duplas" id="duplasLista">
+                        <div class="sorteio-vazio">Clique em SORTEAR para formar as duplas.</div>
+                    </div>
+                </div>
+                <div class="sorteio-dir reveal d4">
+                    <button class="btn-sortear" id="btnSortear">SORTEAR</button>
+                    <div class="add-linha">
+                        <input type="text" id="novoAluno" placeholder="Nome do aluno" maxlength="28">
+                        <label for="fotoAluno">FOTO</label>
+                        <input type="file" id="fotoAluno" accept="image/*" hidden>
+                    </div>
+                    <button class="btn-menor" id="btnAdd">ADICIONAR NA TURMA</button>
+                    <div class="turma-chips" id="turmaChips"></div>
+                    <div class="sorteio-info" id="sorteioInfo"></div>
+                    <button class="btn-menor" id="btnZerar">ZERAR HISTÓRICO DE DUPLAS</button>
+                </div>
+            </div>
+        </div>
+        <div class="foot">O SORTEIO NUNCA REPETE UMA DUPLA ENQUANTO HOUVER COMBINAÇÃO NOVA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 15 · O TEXTO ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Uma prancheta por dupla. Copiem as dez frases</div>
+            <h1 class="wipe" style="margin-top:22px;font-size:96px">O TEXTO</h1>
+            <div class="texto-num">
+                <div class="reveal d3"><b>01</b><span>Eis o humano perfeito.</span></div>
+                <div class="reveal d3"><b>06</b><span>Vejam o rosto dele.</span></div>
+                <div class="reveal d4"><b>02</b><span>Vejam o lugar onde ele está.</span></div>
+                <div class="reveal d4"><b>07</b><span>O humano perfeito está pensando.</span></div>
+                <div class="reveal d5"><b>03</b><span>Vejam como ele se move neste lugar.</span></div>
+                <div class="reveal d5"><b>08</b><span>Nós nunca vamos saber no quê.</span></div>
+                <div class="reveal d6"><b>04</b><span>Agora vejam as mãos dele.</span></div>
+                <div class="reveal d6"><b>09</b><span>Vejam ele uma última vez, inteiro,</span></div>
+                <div class="reveal d7"><b>05</b><span>O humano perfeito está fazendo alguma coisa com as mãos.</span></div>
+                <div class="reveal d7"><b>10</b><span>antes que ele vá embora.</span></div>
+            </div>
+        </div>
+        <div class="foot">DEZ FRASES · SEIS PLANOS DISPONÍVEIS · VOCÊS DECIDEM QUAL VAI ONDE</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 16 · AS REGRAS ============ -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Como funciona</div>
+            <h1 class="wipe" style="margin-top:22px;font-size:104px">AS REGRAS DO JOGO</h1>
+            <ul class="regras">
+                <li class="reveal d3"><span>01</span>Em dupla. Um filma, o outro é o humano perfeito. <strong>Na metade vocês trocam.</strong></li>
+                <li class="reveal d4"><span>02</span>Antes de gravar, escrevam na prancheta qual plano escolheram para cada frase.</li>
+                <li class="reveal d5"><span>03</span><strong>Usem os seis, cada um pelo menos uma vez.</strong> Não dá pra encher de primeiro plano.</li>
+                <li class="reveal d6"><span>04</span>Antes de cada plano, mostrem o número da frase com os dedos na frente da câmera. Isso é a claquete.</li>
+                <li class="reveal d7"><span>05</span>Só imagem. Som é daqui a quatro encontros, hoje ninguém cobra áudio.</li>
+            </ul>
+            <p class="reveal d7" style="margin-top:34px;font-size:30px">Terminou, manda os planos <strong>no meu privado</strong>, na ordem, tudo de uma vez.</p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 17 · RODAGEM ============ -->
+    <section class="slide" data-min="20">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1" style="color:var(--rec)">● Rodando</div>
+            <h1 class="wipe" style="margin-top:16px;font-size:96px">VAI</h1>
+            <div class="timer-wrap">
+                <!-- clique no número pra iniciar e pausar -->
+                <div class="timer parado" id="cronometro" data-seg="1200">20:00</div>
+                <div class="timer-dica">CLIQUE NO NÚMERO PARA COMEÇAR</div>
+            </div>
+            <div class="regua">
+                <div class="item"><img data-camada1="pg" alt=""><div class="sg">PG</div><div class="nm">PLANO GERAL</div></div>
+                <div class="item"><img data-camada1="pc" alt=""><div class="sg">PC</div><div class="nm">PLANO CONJUNTO</div></div>
+                <div class="item"><img data-camada1="pa" alt=""><div class="sg">PA</div><div class="nm">PLANO AMERICANO</div></div>
+                <div class="item"><img data-camada1="pm" alt=""><div class="sg">PM</div><div class="nm">PLANO MÉDIO</div></div>
+                <div class="item"><img data-camada1="pp" alt=""><div class="sg">PP</div><div class="nm">PRIMEIRO PLANO</div></div>
+                <div class="item"><img data-camada1="pd" alt=""><div class="sg">PD</div><div class="nm">PLANO DETALHE</div></div>
+            </div>
+        </div>
+        <div class="foot">DEZ FRASES · SEIS PLANOS · CLAQUETE COM OS DEDOS</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 18 · EXIBIÇÃO ============ -->
+    <section class="slide" data-min="16">
+        <div class="clapper-bar"></div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Mesmo texto, quantas vezes forem as duplas</div>
+            <h1 class="wipe" style="font-size:186px">AGORA A<br>GENTE VÊ</h1>
+            <p class="sub reveal d4"><em>Ninguém comenta o filme do outro antes de todos passarem.</em></p>
+        </div>
+        <div class="foot">UMA DUPLA DE CADA VEZ</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 19 · DEBATE ============ -->
+    <section class="slide" data-min="8">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Mesmo texto, mesmas dez frases, resultados diferentes</div>
+            <h1 class="wipe" style="margin-top:22px;font-size:104px">NINGUÉM MENTIU, TODO MUNDO ENQUADROU</h1>
+            <ul class="regras">
+                <li class="reveal d3"><span>01</span>Na frase 6, "vejam o rosto dele": todo mundo escolheu primeiro plano? Quem escolheu outra coisa, e por quê?</li>
+                <li class="reveal d4"><span>02</span>Escolham uma frase, qualquer uma. Cada dupla diz qual plano usou nela. Deu diferente? Então por quê.</li>
+                <li class="reveal d5"><span>03</span>Em qual versão o humano perfeito pareceu mais sozinho? O que no quadro fez isso acontecer?</li>
+                <li class="reveal d6"><span>04</span>Quem estava filmando pediu alguma coisa pro colega fazer? Pediu o quê, e como pediu?</li>
+            </ul>
+            <p class="reveal d7" style="margin-top:32px;font-size:31px">Vocês tomaram <strong>dez decisões</strong> sobre como uma pessoa ia ser vista. Ela não escolheu nenhuma delas.</p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 20 · A REVELAÇÃO ============
+         Só aqui a turma descobre de onde veio o exercício. Antes disso a
+         referência contaminaria a escolha de plano deles: filmariam o que
+         acharam que o filme faria, não o que decidiram. Depois do debate,
+         a mesma informação vira repertório. -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Agora eu posso contar de onde veio</div>
+            <h1 class="wipe" style="margin-top:16px;font-size:100px">ISSO AQUI JÁ FOI UM FILME</h1>
+            <div class="revela">
+                <div class="reveal d3">
+                    <img class="quadro" src="assets/leth-humano.jpg" alt="Homem de smoking em fundo branco, de O Humano Perfeito">
+                    <div class="cap">O HUMANO PERFEITO · JØRGEN LETH · DINAMARCA, 1967</div>
+                </div>
+                <div>
+                    <p class="reveal d4">Em 1967 um dinamarquês chamado <strong>Jørgen Leth</strong> botou um homem e uma mulher num estúdio branco, sem cenário, sem figurino de época, sem história e sem nome. Um narrador descreve o que eles fazem, de fora, com a frieza de quem observa um bicho: agora ele come, agora ele dança, agora ele cai. Treze minutos. <strong>O filme não conta nada. Ele só olha, e escolhe a distância de cada olhada.</strong></p>
+                    <p class="nota reveal d5">O texto que vocês filmaram <strong>não é o dele</strong>. É uma adaptação que eu escrevi no mesmo espírito, pra caber neste espaço e nos seis planos que a gente viu hoje.</p>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+        <!-- ============ 21 · OS OUTROS CONTROLES ============
+         Vem antes do fechamento de propósito. Depois de 80 minutos só de
+         escala, a turma sai daqui achando que linguagem audiovisual são seis
+         planos. Os seis não são uma seleção dos melhores entre centenas:
+         são um eixo inteiro, o da escala. Dolly, zoom, plongée e companhia
+         são OUTROS eixos, e cada um tem encontro marcado. -->
+    <section class="slide" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Antes que fique a impressão errada</div>
+            <h1 class="wipe" style="margin-top:18px;font-size:96px">SEIS PLANOS NÃO SÃO A LINGUAGEM.<br>SÃO UM CONTROLE DELA.</h1>
+            <div class="eixos">
+                <div class="hoje reveal d3"><b>ESCALA</b><em>HOJE</em><span>Quanto do assunto cabe no quadro. PG, PC, PA, PM, PP, PD.</span></div>
+                <div class="reveal d3"><b>LENTE E FOCO</b><em>ENCONTRO 3 E 4</em><span>O que fica nítido, o que borra, o que a lente aproxima sem sair do lugar.</span></div>
+                <div class="reveal d4"><b>ÂNGULO</b><em>ENCONTRO 4</em><span>Filmar de cima, de baixo ou na altura do olho, e o que isso diz de quem é filmado.</span></div>
+                <div class="reveal d4"><b>MOVIMENTO</b><em>ENCONTRO 4</em><span>Câmera parada, câmera que anda junto, câmera na mão.</span></div>
+                <div class="reveal d5"><b>LUZ</b><em>ENCONTRO 5</em><span>De onde vem, o que ela revela e principalmente o que ela esconde.</span></div>
+                <div class="reveal d5"><b>SOM</b><em>ENCONTRO 6</em><span>O que se ouve e não está no quadro. Metade do cinema entra por aqui.</span></div>
+            </div>
+            <p class="reveal d6" style="margin-top:30px;font-size:27px">Dentro da própria escala ainda cabe mais: o <strong>grande plano geral</strong>, mais aberto que o PG, e o <strong>primeiríssimo primeiro plano</strong>, mais fechado que o PP. Não são conceitos novos, é a mesma régua esticada. <strong>E dar zoom não é a mesma coisa que andar com a câmera: o resultado é outro.</strong> Isso é no encontro 4.</p>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 22 · FECHAMENTO ============ -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Últimos três minutos, no app</div>
+            <h1 class="wipe" style="font-size:150px">CADERNO<br>DE BORDO</h1>
+            <p class="sub reveal d4">Não é sobre a aula, é sobre você. Ninguém lê o que você escreve, a não ser que você marque como compartilhável.</p>
+            <p class="reveal d6" style="margin-top:32px;font-size:32px"><strong>Enquadrar é escolher.</strong> Hoje vocês escolheram dez vezes.</p>
+        </div>
+        <div class="foot">PRÓXIMO ENCONTRO · A CÂMERA É SUA</div>
+        <div class="grain"></div>
+    </section>
+
+</main>
+</div>
+
+<div class="deck-controls" id="deckCounter">01 / 21</div>
+<div class="edit-hotzone" aria-hidden="true"></div>
+<button class="edit-toggle" id="editToggle" title="Modo de edição (E)">✏️</button>
+
+<script>
+/* ===========================================
+   CONTROLADOR DA APRESENTAÇÃO
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.stage = document.getElementById('deckStage');
+        this.counter = document.getElementById('deckCounter');
+        this.current = 0;
+        this.montarCamada1();
+        this.buildSlates();
+        this.setupStageScale();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.setupCronometro();
+        this.setupVideos();
+        this.showSlide(0);
+    }
+
+    /* As imagens da camada 1 (geradas no Gemini) entram sozinhas quando os
+       arquivos existirem em assets/. Enquanto não existirem, cada uma vira um
+       espaço reservado. Nomes esperados: assets/camada1-pg.jpg, -pc, -pa,
+       -pm, -pp, -pd. Não precisa editar o HTML pra encaixar. */
+    montarCamada1() {
+        document.querySelectorAll('img[data-camada1]').forEach(img => {
+            const sigla = img.dataset.camada1;
+            img.src = `assets/camada1-${sigla}.jpg`;
+            img.alt = `Escala de planos, ${sigla.toUpperCase()}`;
+            img.addEventListener('error', () => {
+                const box = document.createElement('div');
+                const naEscala = img.closest('.escala');
+                box.className = 'aguardando';
+                box.innerHTML = naEscala
+                    ? sigla.toUpperCase()
+                    : `<span>${sigla.toUpperCase()}</span>gerar no Gemini e salvar como<br>assets/camada1-${sigla}.jpg`;
+                img.replaceWith(box);
+            });
+        });
+    }
+
+    /* Claquete de canto a partir do data-min. O acumulado é somado aqui,
+       então nunca desencontra do tempo individual. */
+    buildSlates() {
+        let acumulado = 0;
+        this.slides.forEach((slide, i) => {
+            const min = parseInt(slide.dataset.min || '0', 10);
+            acumulado += min;
+            const el = document.createElement('div');
+            el.className = 'slate';
+            el.innerHTML =
+                `<span class="n">${String(i + 1).padStart(2, '0')}</span>` +
+                `<span class="t">${min}'</span>` +
+                `<span class="acc">${acumulado}' DE 90'</span>`;
+            slide.appendChild(el);
+        });
+        this.totalMin = acumulado;
+    }
+
+    setupStageScale() {
+        const scale = () => {
+            const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const x = (window.innerWidth - 1920 * factor) / 2;
+            const y = (window.innerHeight - 1080 * factor) / 2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+        };
+        scale();
+        window.addEventListener('resize', scale);
+    }
+
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') return;
+            /* No slide de vídeo o espaço toca e pausa, em vez de avançar: é o
+               reflexo de quem apresenta, e as setas continuam navegando. */
+            if (e.key === ' ') {
+                const v = this.slides[this.current].querySelector('.video-aula');
+                if (v) { e.preventDefault(); v.paused ? v.play() : v.pause(); return; }
+            }
+            switch (e.key) {
+                case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+                    e.preventDefault(); this.next(); break;
+                case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+                    e.preventDefault(); this.prev(); break;
+                case 'Home': e.preventDefault(); this.showSlide(0); break;
+                case 'End':  e.preventDefault(); this.showSlide(this.slides.length - 1); break;
+            }
+        });
+    }
+
+    setupTouchNav() {
+        let startX = 0, startY = 0;
+        document.addEventListener('touchstart', (e) => {
+            startX = e.changedTouches[0].clientX; startY = e.changedTouches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? this.next() : this.prev();
+        }, { passive: true });
+    }
+
+    setupWheelNav() {
+        let lock = false;
+        document.addEventListener('wheel', (e) => {
+            if (lock || Math.abs(e.deltaY) < 24) return;
+            lock = true;
+            e.deltaY > 0 ? this.next() : this.prev();
+            setTimeout(() => { lock = false; }, 700);
+        }, { passive: true });
+    }
+
+    /* Cronômetro regressivo da rodagem. Clique no número inicia e pausa.
+       Para mudar a duração, troque o data-seg no HTML (1200 = 20 minutos). */
+    setupCronometro() {
+        const el = document.getElementById('cronometro');
+        if (!el) return;
+        let restante = parseInt(el.dataset.seg, 10);
+        let rodando = false, intervalo = null;
+        const pinta = () => {
+            const m = Math.floor(restante / 60), s = restante % 60;
+            el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            el.classList.toggle('acabando', restante <= 120);
+            el.classList.toggle('parado', !rodando && restante > 0);
+        };
+        el.addEventListener('click', () => {
+            rodando = !rodando;
+            if (rodando) {
+                intervalo = setInterval(() => {
+                    if (restante > 0) restante--;
+                    if (restante === 0) { clearInterval(intervalo); rodando = false; }
+                    pinta();
+                }, 1000);
+            } else clearInterval(intervalo);
+            pinta();
+        });
+        pinta();
+    }
+
+    next() { this.showSlide(this.current + 1); }
+    prev() { this.showSlide(this.current - 1); }
+
+    showSlide(index) {
+        this.current = Math.max(0, Math.min(index, this.slides.length - 1));
+        this.slides.forEach((slide, i) => {
+            const on = i === this.current;
+            slide.classList.toggle('active', on);
+            slide.classList.toggle('visible', on);
+        });
+        const n = String(this.current + 1).padStart(2, '0');
+        const t = String(this.slides.length).padStart(2, '0');
+        this.counter.textContent = `${n} / ${t}`;
+        this.rodarVideos();
+    }
+
+    /* Vídeo em aula não começa sozinho: quem aperta o play é o educador,
+       quando a sala já sabe o que tem que procurar. Sair do slide rebobina,
+       pra exibição nenhuma começar no meio se você voltar. */
+    rodarVideos() {
+        this.slides.forEach((slide, i) => {
+            if (i === this.current) return;
+            slide.querySelectorAll('video').forEach(v => { v.pause(); v.currentTime = 0; });
+        });
+    }
+
+    setupVideos() {
+        document.querySelectorAll('.slide-video').forEach(slide => {
+            const v = slide.querySelector('.video-aula');
+            const btn = slide.querySelector('.botao-play');
+            if (!v) return;
+            const capa = on => slide.classList.toggle('tocando', on);
+            if (btn) btn.addEventListener('click', () => v.play());
+            v.addEventListener('play',  () => capa(true));
+            v.addEventListener('pause', () => capa(false));
+            v.addEventListener('ended', () => { capa(false); v.currentTime = 0; });
+            /* Clicar na imagem pausa: dá pra travar num plano e perguntar
+               "esse aí é qual?" sem sair do slide. */
+            v.addEventListener('click', () => { if (!v.paused) v.pause(); });
+        });
+    }
+}
+
+/* ===========================================
+   EDIÇÃO INLINE
+   =========================================== */
+class InlineEditor {
+    constructor() {
+        this.isActive = false;
+        this.key = 'tvf-encontro2-edits';
+        this.targets = 'h1, h2, h3, p, li, span.nome, span.def, .legenda, .eyebrow, .foot';
+        this.restore();
+    }
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        const btn = document.getElementById('editToggle');
+        btn.classList.toggle('active', this.isActive);
+        btn.classList.toggle('show', this.isActive);
+        document.querySelectorAll('.slide ' + this.targets).forEach((el, i) => {
+            if (el.querySelector(this.targets)) return;
+            el.setAttribute('contenteditable', this.isActive ? 'true' : 'false');
+            el.dataset.editId = el.dataset.editId || 'e' + i;
+            if (this.isActive) el.addEventListener('blur', () => this.save(), { once: true });
+        });
+        if (!this.isActive) this.save();
+    }
+    save() {
+        const data = {};
+        document.querySelectorAll('[data-edit-id]').forEach(el => { data[el.dataset.editId] = el.innerHTML; });
+        try { localStorage.setItem(this.key, JSON.stringify(data)); } catch (e) {}
+    }
+    restore() {
+        let data;
+        try { data = JSON.parse(localStorage.getItem(this.key) || '{}'); } catch (e) { return; }
+        document.querySelectorAll('.slide ' + this.targets).forEach((el, i) => {
+            const id = 'e' + i;
+            if (data[id] !== undefined && !el.querySelector(this.targets)) {
+                el.dataset.editId = id; el.innerHTML = data[id];
+            }
+        });
+    }
+}
+
+/* ===========================================
+   SORTEADOR DE DUPLAS COM MEMÓRIA
+   Guarda turma e histórico sob 'tvf-duplas', chave do CURSO e não deste
+   encontro: qualquer deck futuro com este componente continua de onde parou.
+   O sorteio evita qualquer par que já aconteceu; quando todos já tiverem
+   feito dupla com todos, avisa e só então permite repetir.
+   =========================================== */
+/* Turma puxada do Caderno de Bordo em 10/09/2026, com as fotos que cada
+   aluno escolheu. Só é usada quando ainda não existe turma salva neste
+   navegador; a partir daí vale o que estiver no localStorage.
+   Buck ficou de fora de propósito: educador não entra no sorteio. */
+const TURMA_INICIAL = [];
+
+class SorteioDuplas {
+    constructor() {
+        this.chave = 'tvf-duplas';
+        this.dados = this.carregar();
+        this.el = {
+            lista: document.getElementById('duplasLista'),
+            chips: document.getElementById('turmaChips'),
+            info:  document.getElementById('sorteioInfo'),
+            nome:  document.getElementById('novoAluno'),
+            foto:  document.getElementById('fotoAluno'),
+        };
+        if (!this.el.lista) return;
+        this.fotoPendente = null;
+        this.ligarEventos();
+        this.render();
+    }
+
+    carregar() {
+        try {
+            const d = JSON.parse(localStorage.getItem(this.chave) || '{}');
+            return { turma: d.turma || TURMA_INICIAL.slice(), historico: d.historico || [] };
+        } catch (e) { return { turma: TURMA_INICIAL.slice(), historico: [] }; }
+    }
+    salvar() { try { localStorage.setItem(this.chave, JSON.stringify(this.dados)); } catch (e) {} }
+
+    ligarEventos() {
+        document.getElementById('btnAdd').addEventListener('click', () => this.addAluno());
+        this.el.nome.addEventListener('keydown', (e) => {
+            e.stopPropagation();                       // não deixa o espaço virar "próximo slide"
+            if (e.key === 'Enter') this.addAluno();
+        });
+        this.el.foto.addEventListener('change', (e) => this.lerFoto(e));
+        document.getElementById('btnSortear').addEventListener('click', () => this.sortear());
+        document.getElementById('btnZerar').addEventListener('click', () => {
+            if (!confirm('Isso apaga só o histórico de quem já fez dupla com quem. A turma continua. Confirma?')) return;
+            this.dados.historico = []; this.salvar(); this.render();
+        });
+    }
+
+    lerFoto(e) {
+        const f = e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {                        // recorta quadrado e reduz, pra não estourar o localStorage
+                const c = document.createElement('canvas'); c.width = c.height = 128;
+                const g = c.getContext('2d');
+                const lado = Math.min(img.width, img.height);
+                g.drawImage(img, (img.width-lado)/2, (img.height-lado)/2, lado, lado, 0, 0, 128, 128);
+                this.fotoPendente = c.toDataURL('image/jpeg', 0.7);
+                this.el.nome.focus();
+            };
+            img.src = ev.target.result;
+        };
+        r.readAsDataURL(f);
+    }
+
+    addAluno() {
+        const nome = this.el.nome.value.trim();
+        if (!nome) return;
+        if (this.dados.turma.some(a => a.nome.toLowerCase() === nome.toLowerCase())) { this.el.nome.value = ''; return; }
+        this.dados.turma.push({ nome, foto: this.fotoPendente || null });
+        this.fotoPendente = null;
+        this.el.nome.value = ''; this.el.foto.value = '';
+        this.salvar(); this.render();
+    }
+
+    removerAluno(nome) {
+        this.dados.turma = this.dados.turma.filter(a => a.nome !== nome);
+        this.salvar(); this.render();
+    }
+
+    /* chave canônica de um par, pra comparar independente da ordem */
+    par(a, b) { return [a, b].sort().join(' || '); }
+
+    jaAconteceu(a, b) { return this.dados.historico.includes(this.par(a, b)); }
+
+    /* Tenta achar um emparelhamento sem nenhum par repetido. Com poucas
+       pessoas, embaralhar e testar resolve rápido; 3000 tentativas é folga. */
+    tentarEmparelhar(nomes, evitarRepetidos) {
+        for (let t = 0; t < 3000; t++) {
+            const pool = [...nomes];
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            const grupos = []; let ok = true;
+            while (pool.length >= 2) {
+                const a = pool.shift();
+                let idx = pool.findIndex(b => !evitarRepetidos || !this.jaAconteceu(a, b));
+                if (idx === -1) { ok = false; break; }
+                grupos.push([a, pool.splice(idx, 1)[0]]);
+            }
+            if (!ok) continue;
+            if (pool.length === 1 && grupos.length) grupos[grupos.length - 1].push(pool[0]);  // sobrou um: vira trio
+            return grupos;
+        }
+        return null;
+    }
+
+    sortear() {
+        const nomes = this.dados.turma.map(a => a.nome);
+        if (nomes.length < 2) { this.el.lista.innerHTML = '<div class="sorteio-vazio">Adicione pelo menos duas pessoas na turma.</div>'; return; }
+
+        let grupos = this.tentarEmparelhar(nomes, true);
+        let repetiu = false;
+        if (!grupos) { grupos = this.tentarEmparelhar(nomes, false); repetiu = true; }
+        if (!grupos) return;
+
+        grupos.forEach(g => {
+            for (let i = 0; i < g.length; i++)
+                for (let j = i + 1; j < g.length; j++) {
+                    const k = this.par(g[i], g[j]);
+                    if (!this.dados.historico.includes(k)) this.dados.historico.push(k);
+                }
+        });
+        this.salvar();
+        this.render(grupos, repetiu);
+    }
+
+    avatar(nome) {
+        const a = this.dados.turma.find(x => x.nome === nome);
+        const ini = nome.trim().split(/\s+/).slice(0,2).map(w => w[0] || '').join('').toUpperCase();
+        return a && a.foto ? `<img class="av" src="${a.foto}" alt="">` : `<div class="av">${ini}</div>`;
+    }
+
+    render(grupos, repetiu) {
+        // chips da turma
+        this.el.chips.innerHTML = this.dados.turma.length
+            ? this.dados.turma.map(a => {
+                const ini = a.nome.trim().split(/\s+/).slice(0,2).map(w => w[0] || '').join('').toUpperCase();
+                const face = a.foto ? `<img src="${a.foto}" alt="">` : `<div class="ini">${ini}</div>`;
+                return `<span class="chip">${face}${a.nome}<button data-rem="${a.nome}" title="Tirar da turma">×</button></span>`;
+              }).join('')
+            : '<span class="sorteio-info">Turma vazia. Adicione os alunos aí em cima.</span>';
+        this.el.chips.querySelectorAll('[data-rem]').forEach(b =>
+            b.addEventListener('click', () => this.removerAluno(b.dataset.rem)));
+
+        // duplas sorteadas
+        if (grupos) {
+            this.el.lista.innerHTML = grupos.map((g, i) => {
+                const quem = g.map(n => `<span class="quem">${this.avatar(n)}<span class="nome">${n}</span></span>`)
+                              .join('<span class="mais">+</span>');
+                return `<div class="dupla${g.length > 2 ? ' trio' : ''}"><span class="num">${String(i+1).padStart(2,'0')}</span>${quem}</div>`;
+            }).join('');
+        }
+
+        // contador de combinações
+        const n = this.dados.turma.length;
+        const possiveis = n * (n - 1) / 2;
+        const feitas = this.dados.historico.length;
+        this.el.info.innerHTML = n < 2 ? '' :
+            `TURMA: ${n} PESSOAS<br>DUPLAS POSSÍVEIS: ${possiveis}<br>JÁ ACONTECERAM: <b>${feitas}</b>` +
+            (repetiu ? '<br><span class="sorteio-alerta">Todas as combinações já aconteceram. A partir de agora o sorteio repete duplas.</span>' : '');
+    }
+}
+
+const deck = new SlidePresentation();
+const editor = new InlineEditor();
+const sorteio = new SorteioDuplas();
+
+const hotzone = document.querySelector('.edit-hotzone');
+const editToggle = document.getElementById('editToggle');
+let hideTimeout = null;
+hotzone.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); editToggle.classList.add('show'); });
+hotzone.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400); });
+editToggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+editToggle.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400); });
+editToggle.addEventListener('click', (e) => { e.stopPropagation(); editor.toggleEditMode(); });
+hotzone.addEventListener('click', () => editor.toggleEditMode());
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'e' || e.key === 'E') && !(e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true')) {
+        editor.toggleEditMode();
+    }
+});
+</script>
+</body>
+</html>
