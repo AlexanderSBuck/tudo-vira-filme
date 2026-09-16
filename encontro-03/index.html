@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tudo Vira Filme · Encontro 2</title>
+<title>Tudo Vira Filme · Encontro 3</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -151,25 +151,6 @@ strong { color:var(--chalk); font-weight:700; }
     color:var(--chalk-faint); margin-bottom:12px; text-transform:uppercase;
 }
 .camada .rot b { color:var(--tape); font-weight:400; }
-/* ===== slide de vídeo =====
-   Vídeo em aula é um momento, não um enfeite dentro de um layout: ocupa o
-   palco inteiro, tem som, e quem aperta o play é o educador. A capa some no
-   play e volta no pause, pra a tarefa continuar à mão se alguém perguntar. */
-.slide-video { background:#000; }
-.slide-video .video-aula { position:absolute; inset:0; width:1920px; height:1080px; background:#000; }
-.slide-video .video-aula img, .slide-video .video-aula iframe { width:100%; height:100%; border:0; display:block; object-fit:contain; }
-.video-capa {
-    position:absolute; inset:0; z-index:2;
-    background:linear-gradient(180deg, rgba(20,17,13,0.94) 0%, rgba(20,17,13,0.88) 55%, rgba(20,17,13,0.96) 100%);
-    transition:opacity 0.35s ease;
-}
-.slide-video.tocando .video-capa { opacity:0; pointer-events:none; }
-.botao-play {
-    margin-top:46px; font-family:var(--font-mono); font-size:28px; letter-spacing:0.18em;
-    color:var(--ink); background:var(--stamp); border:0; padding:22px 44px;
-    cursor:pointer; transition:transform 0.15s ease;
-}
-.botao-play:hover, .botao-play:focus-visible { transform:translateY(-3px); outline:2px solid var(--chalk); outline-offset:4px; }
 
 .camada img, .camada .aguardando {
     width:100%; aspect-ratio:16/9; height:auto;
@@ -371,545 +352,192 @@ strong { color:var(--chalk); font-weight:700; }
 .edit-toggle.show, .edit-toggle.active { opacity:1; pointer-events:auto; }
 .edit-toggle.active { background:var(--stamp); }
 [contenteditable="true"] { outline:2px dashed var(--stamp); outline-offset:6px; cursor:text; }
+
+/* ===========================================
+   11. ENCONTRO 3: o exercício de narração, as paradas, o fechamento
+   =========================================== */
+.decupa { display:grid; grid-template-columns:0.9fr 1.1fr; gap:60px; margin-top:16px; align-items:start; }
+.decupa-dir { display:grid; gap:14px; }
+.campo { border-left:4px solid var(--tape); padding:8px 0 8px 22px; }
+.campo b { display:block; font-family:var(--font-display); font-size:40px; color:var(--chalk); line-height:1; padding-top:0.06em; }
+.campo span { display:block; font-family:var(--font-body); font-size:25px; color:var(--chalk-dim); line-height:1.35; margin-top:6px; }
+
+/* onde vale parar: timecode grande à esquerda, a pergunta à direita */
+.paradas { list-style:none; margin:30px 0 0; padding:0; display:grid; gap:20px; }
+.paradas li { display:grid; grid-template-columns:300px 1fr; gap:26px; align-items:baseline; border-left:4px solid var(--tape); padding-left:24px; }
+.paradas b { font-family:var(--font-display); font-size:44px; color:var(--tape); line-height:1; }
+.paradas span { font-family:var(--font-body); font-size:29px; color:var(--chalk); line-height:1.35; }
+.paradas em { color:var(--chalk-dim); }
+
+/* fechamento: sexta e hoje, lado a lado */
+.duas-aulas { display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-top:44px; }
+.duas-aulas > div { border-top:5px solid var(--tape); padding-top:22px; }
+.duas-aulas b { font-family:var(--font-mono); font-size:19px; letter-spacing:0.2em; color:var(--tape); display:block; }
+.duas-aulas span { display:block; font-family:var(--font-display); font-size:64px; color:var(--chalk); line-height:0.96; padding-top:0.06em; margin-top:12px; }
+.duas-aulas em { display:block; font-family:var(--font-body); font-size:31px; color:var(--chalk-dim); font-style:normal; margin-top:14px; }
 </style>
 </head>
 <body>
 
 <div class="deck-viewport">
 <main class="deck-stage" id="deckStage">
-
     <!-- ============ 01 · ABERTURA ============ -->
     <section class="slide title-slide active visible" data-min="1">
         <div class="clapper-bar"></div>
         <div class="pad impact">
-            <div class="eyebrow reveal d1">Encontro 2 de 32 · Cine Teatro Ribalta</div>
-            <h1 class="wipe" style="font-size:176px">O QUE CABE<br>NO QUADRO</h1>
-            <p class="sub reveal d4">E quem fica de fora.</p>
+            <div class="eyebrow reveal d1">Encontro 3 de 32 · Cine Teatro Ribalta</div>
+            <h1 class="wipe" style="font-size:170px">O HUMANO<br>PERFEITO</h1>
+            <p class="sub reveal d4">Sexta vocês fizeram uma versão dele sem saber. Hoje a gente vê o original inteiro. E depois vocês escrevem o que ainda não foi escrito.</p>
         </div>
         <div class="foot">VER · ESCOLHER · FAZER · MOSTRAR</div>
         <div class="grain"></div>
     </section>
 
     <!-- ============ 02 · RODA DE ABERTURA ============ -->
-    <section class="slide" data-min="4">
+    <section class="slide" data-min="5">
         <div class="clapper-bar"></div>
         <div class="ghost">02</div>
         <div class="pad impact">
             <div class="eyebrow reveal d1">Roda de abertura</div>
-            <h1 class="wipe" style="font-size:150px">O QUE FICOU<br>DA PRIMEIRA<br>AULA?</h1>
-            <p class="sub reveal d4">Uma coisa só, a primeira que vier na cabeça.</p>
+            <h1 class="wipe" style="font-size:140px">O QUE FICOU<br>DE SEXTA?</h1>
+            <p class="sub reveal d4">Uma coisa só, a primeira que vier. Do que você filmou, do que viu do outro, ou do que deu errado.</p>
         </div>
         <div class="foot">TODO MUNDO FALA, INCLUSIVE EU</div>
         <div class="grain"></div>
     </section>
 
-    <!-- ============ 03 · A ESCALA INTEIRA ============ -->
-    <section class="slide" data-min="2">
+    <!-- ============ 03 · REVER SEXTA ============ -->
+    <section class="slide" data-min="10">
         <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="eyebrow reveal d1">Um controle só da câmera: o quanto do assunto cabe no quadro</div>
-            <h1 class="wipe" style="margin-top:22px;font-size:112px">SEIS JEITOS DE OLHAR A MESMA PESSOA</h1>
-            <div class="escala">
-                <div class="item reveal d3"><img data-camada1="pg" alt=""><div class="sg">PG</div><div class="nm">PLANO GERAL</div></div>
-                <div class="item reveal d3"><img data-camada1="pc" alt=""><div class="sg">PC</div><div class="nm">PLANO CONJUNTO</div></div>
-                <div class="item reveal d4"><img data-camada1="pa" alt=""><div class="sg">PA</div><div class="nm">PLANO AMERICANO</div></div>
-                <div class="item reveal d4"><img data-camada1="pm" alt=""><div class="sg">PM</div><div class="nm">PLANO MÉDIO</div></div>
-                <div class="item reveal d5"><img data-camada1="pp" alt=""><div class="sg">PP</div><div class="nm">PRIMEIRO PLANO</div></div>
-                <div class="item reveal d5"><img data-camada1="pd" alt=""><div class="sg">PD</div><div class="nm">PLANO DETALHE</div></div>
-            </div>
-            <p class="reveal d6" style="margin-top:34px;font-size:30px">Mesma pessoa, mesmo lugar, mesma luz, mesma roupa. <strong>Só mudou o quanto dela cabe no quadro.</strong> Hoje a gente mexe só nessa régua. Os outros controles chegam nos próximos encontros.</p>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 04 · PG ============ -->
-    <section class="slide" data-min="2">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="plano-head">
-                <span class="sigla wipe">PG</span>
-                <span class="nome reveal d2">PLANO GERAL</span>
-                <span class="def reveal d3">O lugar é o assunto. Se tiver gente, ela é pequena.</span>
-            </div>
-            <div class="camadas">
-                <div class="camada reveal d4">
-                    <div class="rot"><b>01</b> · O ESQUEMA</div>
-                    <img data-camada1="pg" alt="">
-                    <div class="legenda">A régua, sem distração</div>
-                </div>
-                <div class="camada reveal d5">
-                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
-                    <img src="assets/cdb-pg.jpg" alt="Plano geral em Central do Brasil">
-                    <div class="legenda">Walter Salles, 1998</div>
-                </div>
-                <div class="camada reveal d6">
-                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
-                    <img src="assets/geral.jpg" alt="Plano geral em Encruzilhadas do Caos">
-                    <div class="legenda">O primeiro plano do filme, antes de qualquer pessoa</div>
-                </div>
-            </div>
-            <div class="conceito-plano reveal d7">
-                <b>O QUE ELE FAZ</b><span>Situa e mede. Diz onde a cena acontece e qual o tamanho de quem está ali dentro. Às vezes nem tem ninguém: aí ele apresenta o mundo antes de apresentar as pessoas.</span>
-            </div>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 05 · PC ============ -->
-    <section class="slide" data-min="2">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="plano-head">
-                <span class="sigla wipe">PC</span>
-                <span class="nome reveal d2">PLANO CONJUNTO</span>
-                <span class="def reveal d3">Gente o bastante no quadro pra dar pra ler o que fazem e como se relacionam.</span>
-            </div>
-            <div class="camadas">
-                <div class="camada reveal d4">
-                    <div class="rot"><b>01</b> · O ESQUEMA</div>
-                    <img data-camada1="pc" alt="">
-                    <div class="legenda">Os três no mesmo quadro, com o espaço entre eles visível</div>
-                </div>
-                <div class="camada reveal d5">
-                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
-                    <img src="assets/cdb-pc.jpg" alt="Plano conjunto em Central do Brasil">
-                    <div class="legenda">A rua entre as casas conta tanto quanto os dois</div>
-                </div>
-                <div class="camada reveal d6">
-                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
-                    <img src="assets/conjunto.jpg" alt="Plano conjunto em Encruzilhadas do Caos">
-                    <div class="legenda">Seis pessoas, e a posição de cada uma já conta a cena</div>
-                </div>
-            </div>
-            <div class="conceito-plano reveal d7">
-                <b>O QUE ELE FAZ</b><span>Mostra a ação e a relação. É o plano em que a distância entre as pessoas vira informação: quem está perto de quem, quem avança, quem recua.</span>
-            </div>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 06 · PA ============ -->
-    <section class="slide" data-min="3">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="plano-head">
-                <span class="sigla wipe">PA</span>
-                <span class="nome reveal d2">PLANO AMERICANO</span>
-                <span class="def reveal d3">Corta acima do joelho. Nasceu no faroeste, pra caber o rosto e o coldre no mesmo quadro.</span>
-            </div>
-            <div class="camadas">
-                <div class="camada reveal d4">
-                    <div class="rot"><b>01</b> · O ESQUEMA</div>
-                    <img data-camada1="pa" alt="">
-                    <div class="legenda">O corte no joelho</div>
-                </div>
-                <div class="camada reveal d5">
-                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
-                    <div class="aguardando" style="border-color:var(--tape)">
-                        <span>NÃO TEM</span>
-                        E esse é o único degrau da escada<br>que a gente nunca achou aqui
-                    </div>
-                    <div class="legenda">Drama intimista vive de rosto e de paisagem</div>
-                </div>
-                <div class="camada reveal d6">
-                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
-                    <img src="assets/americano.jpg" alt="Plano americano em Encruzilhadas do Caos">
-                    <div class="legenda">Corta na coxa: cabe o rosto e cabe a arma, no mesmo quadro</div>
-                </div>
-            </div>
-            <div class="conceito-plano reveal d7">
-                <b>O QUE ELE FAZ</b><span>Dá postura e domínio. A pessoa ocupa o quadro de pé, inteira o bastante pra impor presença. É o plano do confronto e da atitude.</span>
-            </div>
-            <!-- observação de nomenclatura: é o único degrau da escada com
-                 nacionalidade no nome, e ela foi dada de fora. Serve pra turma
-                 entender que a escala é convenção humana, não lei da natureza. -->
-            <p class="reveal d7" style="margin-top:24px;font-size:27px"><strong>Repara no nome.</strong> Quem batizou foram os franceses, olhando o cinema dos Estados Unidos entre 1910 e 1940. Em inglês <strong>não existe "American shot"</strong>: lá se diz <strong>cowboy shot</strong>, ou o termo neutro <em>medium long shot</em>. E os dois nem cortam no mesmo lugar, um na coxa e outro no joelho. É o único plano da escada com nacionalidade no nome, e o apelido veio de fora.</p>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 07 · PM ============ -->
-    <section class="slide" data-min="2">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="plano-head">
-                <span class="sigla wipe">PM</span>
-                <span class="nome reveal d2">PLANO MÉDIO</span>
-                <span class="def reveal d3">Corta na cintura. O mais neutro dos seis, e por isso o mais usado.</span>
-            </div>
-            <div class="camadas">
-                <div class="camada reveal d4">
-                    <div class="rot"><b>01</b> · O ESQUEMA</div>
-                    <img data-camada1="pm" alt="">
-                    <div class="legenda">O corte na cintura</div>
-                </div>
-                <div class="camada reveal d5">
-                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
-                    <img src="assets/cdb-pm.jpg" alt="Plano médio em Central do Brasil">
-                    <div class="legenda">Da cintura pra cima, e ainda dá pra ver o quarto em volta</div>
-                </div>
-                <div class="camada reveal d6">
-                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
-                    <img src="assets/medio.jpg" alt="Plano médio em Encruzilhadas do Caos">
-                    <div class="legenda">Corpo até a cintura, com a torre atrás situando o lugar</div>
-                </div>
-            </div>
-                <div class="conceito-plano reveal d7">
-                <b>O QUE ELE FAZ</b><span>É o plano da conversa. Fica na distância em que a gente costuma olhar alguém falando com a gente, e por isso quase desaparece.</span>
-            </div>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 08 · PP ============ -->
-    <section class="slide" data-min="2">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="plano-head">
-                <span class="sigla wipe">PP</span>
-                <span class="nome reveal d2">PRIMEIRO PLANO</span>
-                <span class="def reveal d3">Só o rosto. Não tem pra onde fugir, nem pra quem filma nem pra quem é filmado.</span>
-            </div>
-            <div class="camadas">
-                <div class="camada reveal d4">
-                    <div class="rot"><b>01</b> · O ESQUEMA</div>
-                    <img data-camada1="pp" alt="">
-                    <div class="legenda">Cabeça e ombros</div>
-                </div>
-                <div class="camada reveal d5">
-                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
-                    <img src="assets/cdb-pp.jpg" alt="Primeiro plano em Central do Brasil">
-                    <div class="legenda">Fernanda Montenegro. Foi esse plano que foi ao Oscar</div>
-                </div>
-                <div class="camada reveal d6">
-                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
-                    <img src="assets/close.jpg" alt="Primeiro plano em Encruzilhadas do Caos">
-                    <div class="legenda">O rosto decide sozinho o que a cena é</div>
-                </div>
-            </div>
-            <div class="conceito-plano reveal d7">
-                <b>O QUE ELE FAZ</b><span>Tira o mundo e deixa o sentimento. Sem contexto pra fugir, quem assiste é obrigado a lidar com o que está no rosto.</span>
-            </div>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 09 · PD ============ -->
-    <section class="slide" data-min="2">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="plano-head">
-                <span class="sigla wipe" style="color:var(--stamp)">PD</span>
-                <span class="nome reveal d2">PLANO DETALHE</span>
-                <span class="def reveal d3">Uma parte só. O objeto vira o assunto da cena inteira.</span>
-            </div>
-            <div class="camadas">
-                <div class="camada reveal d4">
-                    <div class="rot"><b>01</b> · O ESQUEMA</div>
-                    <img data-camada1="pd" alt="">
-                    <div class="legenda">Uma parte, e nada além dela</div>
-                </div>
-                <div class="camada reveal d5">
-                    <div class="rot"><b>02</b> · CENTRAL DO BRASIL</div>
-                    <img src="assets/cdb-pd.jpg" alt="Plano detalhe em Central do Brasil">
-                    <div class="legenda">A mão escrevendo a carta. A premissa do filme inteiro cabe aqui</div>
-                </div>
-                <div class="camada reveal d6">
-                    <div class="rot"><b>03</b> · ENCRUZILHADAS DO CAOS</div>
-                    <img src="assets/detalhe.jpg" alt="Plano detalhe em Encruzilhadas do Caos">
-                    <div class="legenda">A oferenda. O plano mais fechado é o mais carregado</div>
-                </div>
-            </div>
-            <div class="conceito-plano reveal d7">
-                <b>O QUE ELE FAZ</b><span>Aponta o dedo. Diz "isso aqui importa" e cria expectativa, porque esconde tudo que está em volta.</span>
-            </div>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 10 · A ESCALA CORRENDO ============
-         O único vídeo da aula, e ele vem exatamente aqui: os seis planos
-         acabaram de ser nomeados um a um, parados, e ainda não foram usados.
-         A abertura do Encruzilhadas percorre a escala inteira em ordem, em
-         92 segundos, e não precisa de contexto de enredo porque é o começo
-         do filme. A tarefa vai na tela ANTES do play: sem tarefa, vira
-         sessão de cinema; com tarefa, vira leitura. -->
-    <section class="slide slide-video" data-min="4">
-        <div class="video-aula" id="berco"><img src="assets/abertura-poster.jpg" alt="Abertura de Encruzilhadas do Caos"></div>
-        <div class="video-capa">
-            <div class="pad impact">
-                <div class="eyebrow">Agora os seis, correndo</div>
-                <h1 class="wipe" style="font-size:120px">ESCREVE A ORDEM<br>QUE VOCÊ VIR</h1>
-                <p class="sub">Abertura do Encruzilhadas do Caos. Noventa e dois segundos,<br>e a escala inteira passa em ordem. Anota só as siglas.</p>
-                <button class="botao-play" type="button" id="btnVideo">▶ TOCAR &nbsp;·&nbsp; 1:32</button>
-            </div>
-            <div class="foot">LUZ APAGADA · SOM ALTO · NINGUÉM COMENTA ANTES DO FIM</div>
-        </div>
-        <div class="clapper-bar"></div>
-    </section>
-
-    <!-- ============ 11 · A GRADE DOS TERÇOS ============ -->
-    <section class="slide" data-min="2">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="eyebrow reveal d1">Escolhido o plano, ainda falta decidir onde a pessoa fica</div>
-            <h1 class="wipe" style="margin-top:22px;font-size:104px">A GRADE QUE NINGUÉM VÊ</h1>
-            <div class="duas-comp">
-                <div class="comp-um reveal d3">
-                    <div class="comp-img">
-                        <img src="assets/cdb-pp.jpg" alt="Primeiro plano fora do centro, com grade de terços">
-                        <svg viewBox="0 0 300 169" preserveAspectRatio="none">
-                            <g stroke="#F5760F" stroke-width="0.7" opacity="0.85">
-                                <line x1="100" y1="0" x2="100" y2="169"/><line x1="200" y1="0" x2="200" y2="169"/>
-                                <line x1="0" y1="56.3" x2="300" y2="56.3"/><line x1="0" y1="112.6" x2="300" y2="112.6"/>
-                            </g>
-                            <g fill="#C6FF00">
-                                <circle cx="100" cy="56.3" r="2.4"/><circle cx="200" cy="56.3" r="2.4"/>
-                                <circle cx="100" cy="112.6" r="2.4"/><circle cx="200" cy="112.6" r="2.4"/>
-                            </g>
-                        </svg>
-                    </div>
-                    <div class="legenda"><strong>Segue a regra.</strong> O rosto dela cai em cima de um cruzamento, e sobra ar do outro lado.</div>
-                </div>
-                <div class="comp-um reveal d5">
-                    <div class="comp-img">
-                        <img src="assets/close.jpg" alt="Primeiro plano centralizado, com grade de terços">
-                        <svg viewBox="0 0 300 169" preserveAspectRatio="none">
-                            <g stroke="#F5760F" stroke-width="0.7" opacity="0.85">
-                                <line x1="100" y1="0" x2="100" y2="169"/><line x1="200" y1="0" x2="200" y2="169"/>
-                                <line x1="0" y1="56.3" x2="300" y2="56.3"/><line x1="0" y1="112.6" x2="300" y2="112.6"/>
-                            </g>
-                            <g fill="#C6FF00">
-                                <circle cx="100" cy="56.3" r="2.4"/><circle cx="200" cy="56.3" r="2.4"/>
-                                <circle cx="100" cy="112.6" r="2.4"/><circle cx="200" cy="112.6" r="2.4"/>
-                            </g>
-                        </svg>
-                    </div>
-                    <div class="legenda"><strong>Quebra a regra, de propósito.</strong> Último plano do filme, centralizado e frontal, pra bater de frente com quem assiste.</div>
-                </div>
-            </div>
-            <p class="reveal d7" style="margin-top:26px;font-size:31px">A regra dos terços não é lei. <strong>Ela existe pra você saber o que está fazendo quando resolver não seguir.</strong></p>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 12 · AS OUTRAS TRÊS REGRAS ============ -->
-    <section class="slide" data-min="2">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="eyebrow reveal d1">Três coisas que a turma vai reparar hoje, filmando</div>
-            <h1 class="wipe" style="margin-top:22px;font-size:104px">O AR EM VOLTA DA PESSOA</h1>
-            <div class="tres-regras">
-                <div class="reveal d3"><b>ESPAÇO DE CABEÇA</b><span>A folga entre o topo da cabeça e a borda de cima. Pouca sufoca. Muita afunda a pessoa no quadro e faz ela parecer pequena.</span></div>
-                <div class="reveal d5"><b>ESPAÇO DE OLHAR</b><span>Se ela olha pra direita, deixa sobrar espaço à direita. Sem isso, parece que ela vai bater na borda do quadro.</span></div>
-                <div class="reveal d7"><b>LINHA DO HORIZONTE</b><span>Torta sem querer é erro. Torta de propósito é intenção. As duas se parecem na tela, e só quem filmou sabe qual das duas foi.</span></div>
-            </div>
-        </div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 13 · O DESAFIO ============ -->
-    <section class="slide" data-min="3">
-        <div class="clapper-bar"></div>
-        <div class="ghost">REC</div>
         <div class="pad impact">
-            <div class="eyebrow reveal d1">Agora vocês</div>
-            <h1 class="wipe" style="font-size:190px">O HUMANO<br>PERFEITO</h1>
-            <p class="sub reveal d4">Um texto descreve uma pessoa de fora, frase por frase, como quem apresenta ela pra alguém que nunca viu. <em>Vocês vão filmar esse texto, e cada frase vira um plano.</em></p>
+            <div class="eyebrow reveal d1">Primeiro a dupla que faltou. Depois todas, de novo</div>
+            <h1 class="wipe" style="font-size:150px">REVER<br>SEXTA</h1>
+            <p class="sub reveal d4">Já montadas, com a narração por cima. <em>Reparem no que todo mundo fez igual sem combinar.</em></p>
         </div>
-        <div class="foot">SEM CENÁRIO · SEM FIGURINO · SÓ O QUADRO DECIDE</div>
+        <div class="foot">TOCA DO NOTE · SEM PARAR ENTRE ELAS</div>
         <div class="grain"></div>
     </section>
 
-    <!-- ============ 14 · SORTEIO DAS DUPLAS ============ -->
-    <section class="slide" data-min="2">
+    <!-- ============ 04 · O ORIGINAL ============ -->
+    <section class="slide" data-min="15">
         <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="eyebrow reveal d1">Quem filma com quem</div>
-            <h1 class="wipe" style="margin-top:20px;font-size:96px">AS DUPLAS DE HOJE</h1>
-            <div class="sorteio">
-                <div class="sorteio-esq reveal d3">
-                    <div class="duplas" id="duplasLista">
-                        <div class="sorteio-vazio">Clique em SORTEAR para formar as duplas.</div>
-                    </div>
-                </div>
-                <div class="sorteio-dir reveal d4">
-                    <button class="btn-sortear" id="btnSortear">SORTEAR</button>
-                    <div class="add-linha">
-                        <input type="text" id="novoAluno" placeholder="Nome do aluno" maxlength="28">
-                        <label for="fotoAluno">FOTO</label>
-                        <input type="file" id="fotoAluno" accept="image/*" hidden>
-                    </div>
-                    <button class="btn-menor" id="btnAdd">ADICIONAR NA TURMA</button>
-                    <div class="turma-chips" id="turmaChips"></div>
-                    <div class="sorteio-info" id="sorteioInfo"></div>
-                    <button class="btn-menor" id="btnZerar">ZERAR HISTÓRICO DE DUPLAS</button>
-                </div>
-            </div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Dinamarca, 1967. Treze minutos</div>
+            <h1 class="wipe" style="font-size:170px">O ORIGINAL</h1>
+            <p class="sub reveal d4">Jørgen Leth, <em>Det perfekte menneske</em>. Legendado. <strong>Luz apagada, som alto, sem parar.</strong> Só assiste.</p>
         </div>
-        <div class="foot">O SORTEIO NUNCA REPETE UMA DUPLA ENQUANTO HOUVER COMBINAÇÃO NOVA</div>
+        <div class="foot">TOCA DO NOTE · 13 MIN</div>
         <div class="grain"></div>
     </section>
 
-    <!-- ============ 15 · O TEXTO ============ -->
-    <section class="slide" data-min="2">
+    <!-- ============ 05 · ONDE VALE PARAR ============ -->
+    <section class="slide" data-min="18">
         <div class="clapper-bar"></div>
         <div class="pad">
-            <div class="eyebrow reveal d1">Uma prancheta por dupla. Copiem as dez frases</div>
-            <h1 class="wipe" style="margin-top:22px;font-size:96px">O TEXTO</h1>
-            <div class="texto-num">
-                <div class="reveal d3"><b>01</b><span>Eis o humano perfeito.</span></div>
-                <div class="reveal d3"><b>06</b><span>Vejam o rosto dele.</span></div>
-                <div class="reveal d4"><b>02</b><span>Vejam o lugar onde ele está.</span></div>
-                <div class="reveal d4"><b>07</b><span>O humano perfeito está pensando.</span></div>
-                <div class="reveal d5"><b>03</b><span>Vejam como ele se move neste lugar.</span></div>
-                <div class="reveal d5"><b>08</b><span>Nós nunca vamos saber no quê.</span></div>
-                <div class="reveal d6"><b>04</b><span>Agora vejam as mãos dele.</span></div>
-                <div class="reveal d6"><b>09</b><span>Vejam ele uma última vez, inteiro,</span></div>
-                <div class="reveal d7"><b>05</b><span>O humano perfeito está fazendo alguma coisa com as mãos.</span></div>
-                <div class="reveal d7"><b>10</b><span>antes que ele vá embora.</span></div>
-            </div>
-        </div>
-        <div class="foot">DEZ FRASES · SEIS PLANOS DISPONÍVEIS · VOCÊS DECIDEM QUAL VAI ONDE</div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 16 · AS REGRAS ============ -->
-    <section class="slide" data-min="2">
-        <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="eyebrow reveal d1">Como funciona</div>
-            <h1 class="wipe" style="margin-top:22px;font-size:104px">AS REGRAS DO JOGO</h1>
-            <ul class="regras">
-                <li class="reveal d3"><span>01</span>Em dupla. Um filma, o outro é o humano perfeito. <strong>Na metade vocês trocam.</strong></li>
-                <li class="reveal d4"><span>02</span>Antes de gravar, escrevam na prancheta qual plano escolheram para cada frase.</li>
-                <li class="reveal d5"><span>03</span><strong>Usem os seis, cada um pelo menos uma vez.</strong> Não dá pra encher de primeiro plano.</li>
-                <li class="reveal d6"><span>04</span>Antes de cada plano, mostrem o número da frase com os dedos na frente da câmera. Isso é a claquete.</li>
-                <li class="reveal d7"><span>05</span>Só imagem. Som é daqui a quatro encontros, hoje ninguém cobra áudio.</li>
+            <div class="eyebrow reveal d1">Agora o filme de novo, parando onde quiser</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:96px">ONDE VALE PARAR</h1>
+            <ul class="paradas reveal d3">
+                <li><b>0:09 a 0:48</b><span>Um plano só, 39 segundos, câmera fixa, PM. Os créditos correm por cima. <em>Por que ele não corta?</em></span></li>
+                <li><b>1:27 a 2:16</b><span>Treze planos em 49 segundos: cabelo, mãos, gravata, sapato, batom, orelha. <em>Por que a escada, e não um plano só como no começo?</em></span></li>
+                <li><b>4:14 a 5:22</b><span>Só os sapatos e as pernas, dançando. <em>O que a gente sabe da pessoa sem ver o rosto?</em></span></li>
+                <li><b>8:28 a 8:57</b><span>O barbear: um PM de 28 segundos, e o diário lido por cima. <em>O texto e o plano têm a mesma duração. Coincidência?</em></span></li>
+                <li><b>8:57 a 9:45</b><span>A mesa de jantar vista de cima. <em>De onde a plateia está sentada? Quem seria essa pessoa?</em></span></li>
+                <li><b>a narração</b><span>Ela descreve o que a gente já está vendo, ou diz o que a imagem não mostra? <em>Vai importar daqui a pouco.</em></span></li>
             </ul>
-            <p class="reveal d7" style="margin-top:34px;font-size:30px">Terminou, manda os planos <strong>no meu privado</strong>, na ordem, tudo de uma vez.</p>
         </div>
+        <div class="foot">TOCA DO NOTE · O ZOOM VOCÊ MARCA NA HORA</div>
         <div class="grain"></div>
     </section>
 
-    <!-- ============ 17 · RODAGEM ============ -->
-    <section class="slide" data-min="20">
+    <!-- ============ 06 · O EXERCÍCIO ============ -->
+    <section class="slide" data-min="13">
         <div class="clapper-bar"></div>
         <div class="pad">
-            <div class="eyebrow reveal d1" style="color:var(--rec)">● Rodando</div>
-            <h1 class="wipe" style="margin-top:16px;font-size:96px">VAI</h1>
-            <div class="timer-wrap">
-                <!-- clique no número pra iniciar e pausar -->
-                <div class="timer parado" id="cronometro" data-seg="1200">20:00</div>
-                <div class="timer-dica">CLIQUE NO NÚMERO PARA COMEÇAR</div>
-            </div>
-            <div class="regua">
-                <div class="item"><img data-camada1="pg" alt=""><div class="sg">PG</div><div class="nm">PLANO GERAL</div></div>
-                <div class="item"><img data-camada1="pc" alt=""><div class="sg">PC</div><div class="nm">PLANO CONJUNTO</div></div>
-                <div class="item"><img data-camada1="pa" alt=""><div class="sg">PA</div><div class="nm">PLANO AMERICANO</div></div>
-                <div class="item"><img data-camada1="pm" alt=""><div class="sg">PM</div><div class="nm">PLANO MÉDIO</div></div>
-                <div class="item"><img data-camada1="pp" alt=""><div class="sg">PP</div><div class="nm">PRIMEIRO PLANO</div></div>
-                <div class="item"><img data-camada1="pd" alt=""><div class="sg">PD</div><div class="nm">PLANO DETALHE</div></div>
+            <div class="eyebrow reveal d1" style="color:var(--rec)">● Agora vocês. Um filme que vocês não conhecem, sem som</div>
+            <div class="decupa">
+                <div class="decupa-esq">
+                    <h1 class="wipe" style="font-size:118px">NARRA</h1>
+                    <div class="timer-wrap" style="margin-top:26px;align-items:flex-start">
+                        <div class="timer parado" id="cronometro" data-seg="600" style="font-size:170px">10:00</div>
+                        <div class="timer-dica">CLIQUE NO NÚMERO PARA COMEÇAR</div>
+                    </div>
+                </div>
+                <div class="decupa-dir reveal d3">
+                    <p class="lead" style="font-size:30px;margin:0 0 22px">Um minuto de imagem, mudo, <strong>rodando em loop</strong> enquanto vocês escrevem. Em dupla, na prancheta:</p>
+                    <div class="campo"><b>QUE TEXTO VOCÊS CRIARIAM PRA ANCORAR ESSAS IMAGENS?</b><span>o que elas trazem? o que elas pedem?</span></div>
+                    <div class="campo"><b>PENSEM NO TEXTO. E LEMBREM QUE O SILÊNCIO TAMBÉM COMUNICA</b><span>onde não dizer nada diz mais?</span></div>
+                </div>
             </div>
         </div>
-        <div class="foot">DEZ FRASES · SEIS PLANOS · CLAQUETE COM OS DEDOS</div>
+        <div class="foot">TOCA DO NOTE EM LOOP, MUDO · O RELÓGIO CORRE JUNTO</div>
         <div class="grain"></div>
     </section>
 
-    <!-- ============ 18 · EXIBIÇÃO ============ -->
-    <section class="slide" data-min="16">
-        <div class="clapper-bar"></div>
-        <div class="pad impact">
-            <div class="eyebrow reveal d1">Mesmo texto, quantas vezes forem as duplas</div>
-            <h1 class="wipe" style="font-size:186px">AGORA A<br>GENTE VÊ</h1>
-            <p class="sub reveal d4"><em>Ninguém comenta o filme do outro antes de todos passarem.</em></p>
-        </div>
-        <div class="foot">UMA DUPLA DE CADA VEZ</div>
-        <div class="grain"></div>
-    </section>
-
-    <!-- ============ 19 · DEBATE ============ -->
+    <!-- ============ 07 · AS NARRAÇÕES ============ -->
     <section class="slide" data-min="8">
         <div class="clapper-bar"></div>
-        <div class="pad">
-            <div class="eyebrow reveal d1">Mesmo texto, mesmas dez frases, resultados diferentes</div>
-            <h1 class="wipe" style="margin-top:22px;font-size:104px">NINGUÉM MENTIU, TODO MUNDO ENQUADROU</h1>
-            <ul class="regras">
-                <li class="reveal d3"><span>01</span>Na frase 6, "vejam o rosto dele": todo mundo escolheu primeiro plano? Quem escolheu outra coisa, e por quê?</li>
-                <li class="reveal d4"><span>02</span>Escolham uma frase, qualquer uma. Cada dupla diz qual plano usou nela. Deu diferente? Então por quê.</li>
-                <li class="reveal d5"><span>03</span>Em qual versão o humano perfeito pareceu mais sozinho? O que no quadro fez isso acontecer?</li>
-                <li class="reveal d6"><span>04</span>Quem estava filmando pediu alguma coisa pro colega fazer? Pediu o quê, e como pediu?</li>
-            </ul>
-            <p class="reveal d7" style="margin-top:32px;font-size:31px">Vocês tomaram <strong>dez decisões</strong> sobre como uma pessoa ia ser vista. Ela não escolheu nenhuma delas.</p>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">O mesmo minuto, três vezes</div>
+            <h1 class="wipe" style="font-size:140px">TRÊS VOZES,<br>UMA IMAGEM</h1>
+            <p class="sub reveal d4">A imagem roda muda e a dupla lê a narração ao vivo, no ritmo dos planos, silêncio incluso. Depois, uma pergunta só: o que uma viu que a outra não viu? <em>Me entreguem o papel no fim: sexta esses textos voltam com outra voz.</em></p>
         </div>
+        <div class="foot">TOCA DO NOTE, MUDO · UMA DUPLA DE CADA VEZ</div>
         <div class="grain"></div>
     </section>
 
-    <!-- ============ 20 · A REVELAÇÃO ============
-         Só aqui a turma descobre de onde veio o exercício. Antes disso a
-         referência contaminaria a escolha de plano deles: filmariam o que
-         acharam que o filme faria, não o que decidiram. Depois do debate,
-         a mesma informação vira repertório. -->
-    <section class="slide" data-min="2">
+    <!-- ============ 08 · A SUA VERSÃO ============ -->
+    <section class="slide" data-min="10">
         <div class="clapper-bar"></div>
         <div class="pad">
-            <div class="eyebrow reveal d1">Agora eu posso contar de onde veio</div>
-            <h1 class="wipe" style="margin-top:16px;font-size:100px">ISSO AQUI JÁ FOI UM FILME</h1>
+            <div class="eyebrow reveal d1">Agora com a narração que existe</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:120px">APARTADA</h1>
             <div class="revela">
                 <div class="reveal d3">
-                    <img class="quadro" src="assets/leth-humano.jpg" alt="Homem de smoking em fundo branco, de O Humano Perfeito">
-                    <div class="cap">O HUMANO PERFEITO · JØRGEN LETH · DINAMARCA, 1967</div>
+                    <img class="quadro" style="aspect-ratio:16/9" src="assets/apartada-quarto.jpg" alt="O quarto, em Apartada">
+                    <div class="cap">APARTADA · ALEXANDER S. BUCK · SERRA, 2021 · 5 MIN</div>
                 </div>
                 <div>
-                    <p class="reveal d4">Em 1967 um dinamarquês chamado <strong>Jørgen Leth</strong> botou um homem e uma mulher num estúdio branco, sem cenário, sem figurino de época, sem história e sem nome. Um narrador descreve o que eles fazem, de fora, com a frieza de quem observa um bicho: agora ele come, agora ele dança, agora ele cai. Treze minutos. <strong>O filme não conta nada. Ele só olha, e escolhe a distância de cada olhada.</strong></p>
-                    <p class="nota reveal d5">O texto que vocês filmaram <strong>não é o dele</strong>. É uma adaptação que eu escrevi no mesmo espírito, pra caber neste espaço e nos seis planos que a gente viu hoje.</p>
+                    <p class="reveal d4">Uma versão do Humano Perfeito feita <strong>em confinamento, em 2020.</strong> Um apartamento, uma câmera, o mundo fechado do lado de fora. O texto é uma adaptação, como a de vocês. A ideia é a mesma: uma pessoa, descrita de fora, um plano de cada vez.</p>
+                    <p class="reveal d5">Primeiro o mesmo minuto que vocês narraram, agora com a narração que existe. Depois o filme inteiro.</p>
+                    <p class="nota reveal d6"><strong>Tudo que vocês vão ouvir nele não existia.</strong> Cada barulho foi feito à mão, depois, em dois dias. Isso é daqui a três encontros.</p>
                 </div>
             </div>
         </div>
+        <div class="foot">TOCA DO NOTE · O MINUTO COM SOM, DEPOIS OS CINCO</div>
         <div class="grain"></div>
     </section>
 
-        <!-- ============ 21 · OS OUTROS CONTROLES ============
-         Vem antes do fechamento de propósito. Depois de 80 minutos só de
-         escala, a turma sai daqui achando que linguagem audiovisual são seis
-         planos. Os seis não são uma seleção dos melhores entre centenas:
-         são um eixo inteiro, o da escala. Dolly, zoom, plongée e companhia
-         são OUTROS eixos, e cada um tem encontro marcado. -->
-    <section class="slide" data-min="2">
+    <!-- ============ 09 · O QUE VOCÊS APRENDERAM ============ -->
+    <section class="slide" data-min="5">
         <div class="clapper-bar"></div>
         <div class="pad">
-            <div class="eyebrow reveal d1">Antes que fique a impressão errada</div>
-            <h1 class="wipe" style="margin-top:18px;font-size:96px">SEIS PLANOS NÃO SÃO A LINGUAGEM.<br>SÃO UM CONTROLE DELA.</h1>
-            <div class="eixos">
-                <div class="hoje reveal d3"><b>ESCALA</b><em>HOJE</em><span>Quanto do assunto cabe no quadro. PG, PC, PA, PM, PP, PD.</span></div>
-                <div class="reveal d3"><b>LENTE E FOCO</b><em>ENCONTRO 3 E 4</em><span>O que fica nítido, o que borra, o que a lente aproxima sem sair do lugar.</span></div>
-                <div class="reveal d4"><b>ÂNGULO</b><em>ENCONTRO 4</em><span>Filmar de cima, de baixo ou na altura do olho, e o que isso diz de quem é filmado.</span></div>
-                <div class="reveal d4"><b>MOVIMENTO</b><em>ENCONTRO 4</em><span>Câmera parada, câmera que anda junto, câmera na mão.</span></div>
-                <div class="reveal d5"><b>LUZ</b><em>ENCONTRO 5</em><span>De onde vem, o que ela revela e principalmente o que ela esconde.</span></div>
-                <div class="reveal d5"><b>SOM</b><em>ENCONTRO 6</em><span>O que se ouve e não está no quadro. Metade do cinema entra por aqui.</span></div>
+            <div class="eyebrow reveal d1">Duas aulas, uma coisa só, vista de dois lados</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:104px">O FILME MORA NO ESPAÇO<br>ENTRE OS DOIS</h1>
+            <div class="duas-aulas">
+                <div class="reveal d3"><b>SEXTA</b><span>Um texto pediu imagens.</span><em>Cada plano foi uma escolha.</em></div>
+                <div class="reveal d4"><b>HOJE</b><span>Uma imagem pediu texto.</span><em>Cada palavra foi uma escolha.</em></div>
             </div>
-            <p class="reveal d6" style="margin-top:30px;font-size:27px">Dentro da própria escala ainda cabe mais: o <strong>grande plano geral</strong>, mais aberto que o PG, e o <strong>primeiríssimo primeiro plano</strong>, mais fechado que o PP. Não são conceitos novos, é a mesma régua esticada. <strong>E dar zoom não é a mesma coisa que andar com a câmera: o resultado é outro.</strong> Isso é no encontro 4.</p>
+            <p class="reveal d6" style="margin-top:44px;font-size:34px;max-width:1560px"><strong>Ninguém filma o que a narração já diz. Ninguém narra o que a imagem já mostra.</strong> Quando um repete o outro, sobra. Quando um completa o outro, vira cinema.</p>
         </div>
+        <div class="foot">SEXTA · A CÂMERA VAI PRA MÃO DE VOCÊS</div>
         <div class="grain"></div>
     </section>
 
-    <!-- ============ 22 · FECHAMENTO ============ -->
+    <!-- ============ 10 · CADERNO DE BORDO ============ -->
     <section class="slide" data-min="5">
         <div class="clapper-bar"></div>
         <div class="pad impact">
-            <div class="eyebrow reveal d1">Últimos três minutos, no app</div>
+            <div class="eyebrow reveal d1">Últimos minutos, no app</div>
             <h1 class="wipe" style="font-size:150px">CADERNO<br>DE BORDO</h1>
-            <p class="sub reveal d4">Não é sobre a aula, é sobre você. Ninguém lê o que você escreve, a não ser que você marque como compartilhável.</p>
-            <p class="reveal d6" style="margin-top:32px;font-size:32px"><strong>Enquadrar é escolher.</strong> Hoje vocês escolheram dez vezes.</p>
+            <p class="sub reveal d4">Uma pergunta pra hoje: <strong>o que a sua narração disse que a imagem não mostrava?</strong></p>
         </div>
         <div class="foot">PRÓXIMO ENCONTRO · A CÂMERA É SUA</div>
         <div class="grain"></div>
     </section>
-
 </main>
 </div>
 
-<div class="deck-controls" id="deckCounter">01 / 21</div>
+<div class="deck-controls" id="deckCounter">01 / 10</div>
 <div class="edit-hotzone" aria-hidden="true"></div>
 <button class="edit-toggle" id="editToggle" title="Modo de edição (E)">✏️</button>
 
@@ -1111,7 +739,7 @@ class SlidePresentation {
 class InlineEditor {
     constructor() {
         this.isActive = false;
-        this.key = 'tvf-encontro2-edits';
+        this.key = 'tvf-encontro3-edits';
         this.targets = 'h1, h2, h3, p, li, span.nome, span.def, .legenda, .eyebrow, .foot';
         this.restore();
     }
@@ -1318,7 +946,6 @@ class SorteioDuplas {
 
 const deck = new SlidePresentation();
 const editor = new InlineEditor();
-const sorteio = new SorteioDuplas();
 
 const hotzone = document.querySelector('.edit-hotzone');
 const editToggle = document.getElementById('editToggle');
@@ -1334,29 +961,6 @@ document.addEventListener('keydown', (e) => {
         editor.toggleEditMode();
     }
 });
-</script>
-
-<script>
-/* Player do YouTube sob demanda. O deck do educador toca o arquivo local;
-   esta cópia da turma puxa o vídeo do canal, pra o repositório ficar leve. */
-(function () {
-    var VIDEO = 'nWmKuS8gwWU';
-    var btn = document.getElementById('btnVideo');
-    var berco = document.getElementById('berco');
-    if (!btn || !berco) return;
-    btn.addEventListener('click', function () {
-        var f = document.createElement('iframe');
-        f.src = 'https://www.youtube-nocookie.com/embed/' + VIDEO +
-                '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
-        f.title = 'Abertura de Encruzilhadas do Caos';
-        f.allow = 'autoplay; encrypted-media; fullscreen';
-        f.allowFullscreen = true;
-        f.setAttribute('frameborder', '0');
-        berco.innerHTML = '';
-        berco.appendChild(f);
-        berco.closest('.slide-video').classList.add('tocando');
-    });
-})();
 </script>
 </body>
 </html>
