@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tudo Vira Filme · Encontro 6</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+/* ===========================================
+   1. TOKENS DA IDENTIDADE "SLATE & PATCH"
+   =========================================== */
+:root {
+    --ink:        #14110D;
+    --ink-2:      #1E1A14;
+    --ink-3:      #26211A;
+    --chalk:      #F1ECE1;
+    --chalk-dim:  #B3A99A;
+    --chalk-faint:#7A7266;
+    --tape:       #F5760F;
+    --stamp:      #C6FF00;
+    --rec:        #E63946;
+    --line:       rgba(241,236,225,0.14);
+    --stage-bg:   #0A0806;
+    --slide-bg:   #14110D;
+
+    --font-display: 'Bebas Neue', 'Oswald', sans-serif;
+    --font-body:    'Source Sans 3', 'Helvetica Neue', sans-serif;
+    --font-mono:    'Space Mono', 'Courier New', monospace;
+
+    --size-mega:   240px;
+    --size-title:  150px;
+    --size-body:    34px;
+    --size-label:   22px;
+    --pad: 110px;
+
+    --snap:  cubic-bezier(0.16, 1, 0.3, 1);
+    --clack: cubic-bezier(0.86, 0, 0.07, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===========================================
+   2. VIEWPORT-BASE.CSS (PALCO FIXO 16:9)
+   =========================================== */
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-viewport { position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-stage { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; background:var(--slide-bg,#fff); }
+.slide { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--slide-bg,#fff); }
+.slide.active, .slide.visible { visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img, video, canvas, svg { max-width:100%; max-height:100%; }
+.deck-controls { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1000; }
+@media print {
+    html, body { width:1920px; height:auto; overflow:visible; background:#fff; }
+    .deck-viewport { position:static; overflow:visible; background:#fff; }
+    .deck-stage { position:static; width:auto; height:auto; transform:none !important; background:none; }
+    .slide { position:relative; display:block !important; visibility:visible !important; opacity:1 !important; pointer-events:auto !important; width:1920px; height:1080px; break-after:page; page-break-after:always; }
+    .slide:last-child { break-after:auto; page-break-after:auto; }
+    .deck-controls { display:none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; }
+}
+
+/* ===========================================
+   3. CHROME DO PALCO
+   =========================================== */
+.grain {
+    position:absolute; inset:-50%; width:200%; height:200%;
+    pointer-events:none; z-index:50; opacity:0.15;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    animation:grainShift 0.7s steps(4) infinite;
+}
+@keyframes grainShift {
+    0%{transform:translate(0,0)} 25%{transform:translate(-3%,2%)}
+    50%{transform:translate(2%,-3%)} 75%{transform:translate(-2%,-2%)} 100%{transform:translate(0,0)}
+}
+.clapper-bar {
+    position:absolute; top:0; left:0; height:22px; width:100%; z-index:40;
+    background:repeating-linear-gradient(-45deg, var(--tape) 0 34px, var(--ink-2) 34px 68px);
+    transform:scaleX(0); transform-origin:left center; transition:transform 0.75s var(--clack);
+}
+.slide.visible .clapper-bar { transform:scaleX(1); }
+
+/* Claquete de canto: numero, tempo do slide e minuto acumulado.
+   Gerada por JS a partir do data-min de cada <section class="slide">.
+   Slides de plano levam data-min="0": o tempo deles ja esta contado no
+   bloco da rodagem, e somar de novo estouraria os 90 minutos. */
+.slate { position:absolute; top:58px; right:var(--pad); z-index:41; text-align:right; font-family:var(--font-mono); line-height:1.3; }
+.slate .n   { display:block; font-size:var(--size-label); letter-spacing:0.22em; color:var(--chalk-faint); }
+.slate .t   { display:block; font-size:32px; font-weight:700; letter-spacing:0.06em; color:var(--tape); }
+.slate .acc { display:block; font-size:17px; letter-spacing:0.16em; color:rgba(241,236,225,0.26); }
+
+/* ===========================================
+   4. ANIMACAO DE ENTRADA
+   =========================================== */
+.reveal { opacity:0; transform:translateY(38px); transition:opacity 0.7s var(--snap), transform 0.7s var(--snap); }
+.slide.visible .reveal { opacity:1; transform:translateY(0); }
+.slide.visible .d1{transition-delay:.10s} .slide.visible .d2{transition-delay:.20s}
+.slide.visible .d3{transition-delay:.30s} .slide.visible .d4{transition-delay:.40s}
+.slide.visible .d5{transition-delay:.50s} .slide.visible .d6{transition-delay:.60s}
+.slide.visible .d7{transition-delay:.70s}
+.wipe { clip-path:inset(0 100% 0 0); transition:clip-path 0.9s var(--clack); }
+.slide.visible .wipe { clip-path:inset(0 0 0 0); }
+
+/* ===========================================
+   5. COMPONENTES DE CONTEUDO
+   =========================================== */
+.tape-tag {
+    display:inline-block; background:var(--tape); color:var(--ink);
+    font-family:var(--font-display); font-size:34px; letter-spacing:0.06em;
+    padding:10px 28px 6px; transform:rotate(-1.2deg);
+}
+.eyebrow { font-family:var(--font-mono); font-size:var(--size-label); letter-spacing:0.3em; color:var(--tape); text-transform:uppercase; }
+h1,h2,h3 {
+    font-family:var(--font-display); font-weight:400; color:var(--chalk);
+    /* folga obrigatoria: acentos de caixa alta (A, E, O) sao cortados abaixo de 0.96 */
+    line-height:0.96; padding-top:0.06em; letter-spacing:0.01em;
+}
+h1 { font-size:var(--size-title); }
+p, li { font-family:var(--font-body); font-size:var(--size-body); color:var(--chalk-dim); line-height:1.45; }
+.lead { color:var(--chalk); font-size:40px; }
+em { color:var(--tape); font-style:italic; }
+strong { color:var(--chalk); font-weight:700; }
+.pad { position:absolute; inset:0; padding:150px var(--pad) 96px; display:flex; flex-direction:column; }
+.foot { position:absolute; left:var(--pad); bottom:58px; max-width:1300px; font-family:var(--font-mono); font-size:var(--size-label); letter-spacing:0.18em; color:var(--chalk-faint); }
+.impact { align-items:flex-start; justify-content:center; }
+.impact h1 { font-size:var(--size-mega); line-height:0.92; max-width:1500px; }
+.impact .sub { font-size:40px; margin-top:44px; max-width:1300px; }
+.ghost { position:absolute; right:40px; bottom:-110px; font-family:var(--font-display); font-size:620px; line-height:0.7; color:rgba(241,236,225,0.045); z-index:0; pointer-events:none; }
+
+.link {
+    font-family:var(--font-mono); font-size:19px; color:var(--stamp); text-decoration:none;
+    border-bottom:2px solid rgba(198,255,0,0.35); margin-top:12px; align-self:flex-start;
+}
+.link:hover, .link:focus-visible { border-bottom-color:var(--stamp); outline:none; }
+
+/* ===========================================
+   6. TRES COLUNAS GENERICAS (regras, contrastes, blocos)
+   =========================================== */
+.tres-regras { display:grid; grid-template-columns:repeat(3,1fr); gap:40px; margin-top:auto; margin-bottom:auto; padding-bottom:40px; }
+.tres-regras div { border-top:5px solid var(--tape); padding-top:26px; }
+.tres-regras b { display:block; font-family:var(--font-display); font-size:50px; color:var(--chalk); line-height:1; margin-bottom:18px; padding-top:0.06em; }
+.tres-regras span { font-family:var(--font-body); font-size:29px; color:var(--chalk-dim); line-height:1.4; }
+
+.duas-col { display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-top:auto; margin-bottom:auto; padding-bottom:40px; }
+.duas-col > div { border-left:5px solid var(--tape); padding-left:30px; }
+.duas-col b { display:block; font-family:var(--font-display); font-size:62px; color:var(--chalk); line-height:0.98; padding-top:0.06em; }
+.duas-col em { display:block; font-family:var(--font-mono); font-size:17px; letter-spacing:0.18em; color:var(--tape); font-style:normal; margin-bottom:10px; }
+.duas-col span { display:block; font-family:var(--font-body); font-size:29px; color:var(--chalk-dim); line-height:1.4; margin-top:16px; }
+
+/* ===========================================
+   7. MICROFONE E GRAVADOR
+   Uma foto por tipo, uma frase por tipo. O resto e oralidade.
+   Arquivos esperados: assets/microfones/lapela.jpg, boom.jpg, camera.jpg
+   =========================================== */
+.mics { display:grid; grid-template-columns:repeat(3,1fr); gap:36px; margin-top:26px; }
+.mic { display:flex; flex-direction:column; min-width:0; }
+.mic img, .mic .aguardando {
+    /* 2:1 em vez de 16:9: sao fotos de apoio, nao exemplos de enquadramento,
+       e o quadro mais baixo e o que impede a coluna de bater no rodape */
+    width:100%; aspect-ratio:2/1; height:auto; object-fit:contain;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.1);
+}
+.mic .aguardando {
+    border:3px dashed rgba(241,236,225,0.24); background:var(--ink-2);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    font-family:var(--font-mono); font-size:17px; letter-spacing:0.12em; color:var(--chalk-faint); text-align:center; padding:0 20px;
+}
+.mic .aguardando span { color:var(--tape); font-size:26px; }
+.mic b { font-family:var(--font-display); font-size:44px; color:var(--tape); line-height:1; padding-top:0.06em; margin-top:18px; }
+.mic i { font-family:var(--font-mono); font-size:15px; letter-spacing:0.14em; color:var(--chalk-faint); font-style:normal; margin-top:4px; }
+.mic span { font-family:var(--font-body); font-size:24px; color:var(--chalk-dim); line-height:1.35; margin-top:12px; }
+
+
+/* ===========================================
+   7b. TIRA DE TRES MOMENTOS
+   Um frame, e embaixo o som que foi feito na mao naquele plano.
+   =========================================== */
+.tiras { display:grid; grid-template-columns:repeat(3,1fr); gap:34px; margin-top:auto; margin-bottom:auto; padding-bottom:40px; }
+.tira { display:flex; flex-direction:column; min-width:0; }
+.tira img { width:100%; aspect-ratio:2.4/1; height:auto; object-fit:contain; background:#0A0806; border:1px solid rgba(241,236,225,0.12); }
+.tira b { font-family:var(--font-display); font-size:42px; color:var(--tape); line-height:1; padding-top:0.06em; margin-top:16px; }
+.tira span { font-family:var(--font-body); font-size:25px; color:var(--chalk-dim); line-height:1.35; margin-top:10px; }
+.tira span i { color:var(--chalk); font-style:normal; font-weight:700; }
+
+/* ===========================================
+   7c. LINK GRANDE, PRA CLICAR NA PROJECAO
+   Alvo generoso de proposito: em aula o clique e apressado e a tela
+   esta longe. Abre em aba nova, entao o deck nao sai do lugar.
+   =========================================== */
+.link-grande {
+    display:inline-flex; align-items:center; gap:18px; align-self:flex-start;
+    background:var(--stamp); color:var(--ink); text-decoration:none;
+    font-family:var(--font-display); font-size:40px; letter-spacing:0.04em;
+    padding:16px 34px 12px; margin-top:26px;
+    transition:transform 0.2s var(--snap);
+}
+.link-grande:hover, .link-grande:focus-visible { transform:translateY(-3px); outline:none; }
+.link-grande em { font-family:var(--font-mono); font-size:17px; letter-spacing:0.14em; font-style:normal; opacity:0.66; }
+.refs a::before { content:'\2197  '; }
+
+/* ===========================================
+   8. BANCO DE PLANOS E SLIDE DE PLANO
+   Os arquivos ficam em assets/planos/. Enquanto nao existirem, cada um vira
+   espaco reservado com o nome de arquivo que o deck esta esperando, pra dar
+   pra encaixar sem editar HTML.
+   =========================================== */
+.banco {
+    /* seis colunas e nao quatro: com onze planos, quatro colunas viram tres
+       fileiras e a ultima passa por baixo do rodape. Duas fileiras cabem. */
+    display:grid; grid-template-columns:repeat(4,1fr); gap:26px 24px; margin-top:26px;
+}
+.banco .item { display:flex; flex-direction:column; min-width:0; }
+.banco .moldura {
+    position:relative; width:100%; aspect-ratio:16/9;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.12);
+    display:flex; align-items:center; justify-content:center;
+}
+.banco video, .banco img { width:100%; height:100%; object-fit:contain; }
+.banco .vazio {
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.1em;
+    color:var(--chalk-faint); text-align:center; padding:0 12px; line-height:1.5;
+    border:3px dashed rgba(241,236,225,0.2); background:var(--ink-2);
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+}
+.banco .vazio b { font-family:var(--font-display); font-size:34px; color:var(--tape); line-height:1; }
+.banco .nm { font-family:var(--font-display); font-size:30px; color:var(--chalk); line-height:1.02; padding-top:0.06em; margin-top:10px; }
+.banco .cm { font-family:var(--font-body); font-size:18px; color:var(--chalk-dim); line-height:1.28; margin-top:4px; }
+
+/* Slide de um plano: video grande, e embaixo o que o aluno tem em maos.
+   O play e sempre do educador. Clicar no video pausa, pra travar num
+   instante e perguntar "que som e esse?". */
+.slide-plano .pad { padding:120px var(--pad) 96px; }
+.plano-topo { display:flex; align-items:baseline; gap:28px; }
+.plano-topo .num { font-family:var(--font-display); font-size:120px; color:var(--tape); line-height:0.9; }
+.plano-topo .nm  { font-family:var(--font-display); font-size:76px; color:var(--chalk); line-height:0.95; padding-top:0.06em; }
+.plano-topo .dur { margin-left:auto; font-family:var(--font-mono); font-size:22px; letter-spacing:0.18em; color:var(--chalk-faint); }
+.plano-palco {
+    position:relative; width:100%; flex:1; min-height:0; margin-top:24px;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.12);
+    display:flex; align-items:center; justify-content:center;
+}
+.plano-palco video, .plano-palco img.frame { width:100%; height:100%; object-fit:contain; }
+.plano-palco video { cursor:pointer; }
+/* Selo discreto sobre o frame: deixa claro que aquilo ainda e imagem parada,
+   pra ninguem apertar play esperando movimento. */
+.plano-palco .selo {
+    position:absolute; left:0; bottom:0; z-index:4;
+    background:var(--tape); color:var(--ink);
+    font-family:var(--font-mono); font-size:15px; letter-spacing:0.16em;
+    padding:9px 18px;
+}
+.plano-palco .vazio {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:14px;
+    border:4px dashed rgba(241,236,225,0.2); background:var(--ink-2);
+    font-family:var(--font-mono); font-size:22px; letter-spacing:0.12em; color:var(--chalk-faint); text-align:center;
+}
+.plano-palco .vazio b { font-family:var(--font-display); font-size:90px; color:var(--tape); line-height:1; }
+.plano-palco .botao-play {
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    background:var(--tape); color:var(--ink); border:none; cursor:pointer;
+    font-family:var(--font-display); font-size:46px; letter-spacing:0.05em;
+    padding:16px 46px 12px; z-index:3;
+}
+.slide-plano.tocando .botao-play { display:none; }
+.plano-baixo { display:flex; gap:40px; align-items:baseline; margin-top:22px; border-top:3px solid var(--tape); padding-top:18px; }
+.plano-baixo b { font-family:var(--font-mono); font-size:17px; letter-spacing:0.2em; color:var(--tape); flex-shrink:0; padding-top:5px; }
+.plano-baixo span { font-family:var(--font-body); font-size:30px; color:var(--chalk); line-height:1.3; }
+
+/* ===========================================
+   10. CRONOMETRO
+   =========================================== */
+.regras { list-style:none; display:grid; gap:24px; margin-top:44px; }
+.regras li { display:flex; gap:26px; align-items:flex-start; border-left:4px solid var(--tape); padding-left:26px; font-size:33px; color:var(--chalk); }
+.regras li span { font-family:var(--font-mono); font-size:22px; color:var(--chalk-faint); padding-top:6px; flex-shrink:0; }
+
+.timer-wrap { display:flex; align-items:center; justify-content:center; flex:1; flex-direction:column; gap:16px; }
+.timer {
+    font-family:var(--font-mono); font-weight:700; font-size:230px; line-height:1;
+    color:var(--tape); letter-spacing:0.02em; cursor:pointer; user-select:none;
+    font-variant-numeric:tabular-nums;
+}
+.timer.parado { color:var(--chalk-faint); }
+.timer.acabando { color:var(--rec); }
+.timer-dica { font-family:var(--font-mono); font-size:24px; letter-spacing:0.2em; color:var(--chalk-faint); }
+
+/* ===========================================
+   11. RESULTADO DE QUARTA (obra de aluno)
+   Fica so no deck local. Nao vai pro repositorio publico.
+   =========================================== */
+.quarta {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:26px 30px;
+    /* largura menor que o slide de proposito: com seis quadros em duas
+       fileiras, a segunda fileira passaria por baixo do rodape fixo */
+    width:1460px; margin:28px auto 0;
+}
+.quarta .item { display:flex; flex-direction:column; min-width:0; }
+.quarta img, .quarta .vazio {
+    width:100%; aspect-ratio:16/9; height:auto; object-fit:contain;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.12);
+}
+.quarta .vazio {
+    border:3px dashed rgba(241,236,225,0.2); background:var(--ink-2);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:15px; letter-spacing:0.1em; color:var(--chalk-faint); text-align:center; padding:0 14px; line-height:1.5;
+}
+.quarta .pal { font-family:var(--font-display); font-size:34px; color:var(--tape); line-height:1; padding-top:0.06em; margin-top:8px; }
+
+/* ===========================================
+   12. REFERENCIAS PRA VER DEPOIS
+   =========================================== */
+.refs { display:grid; grid-template-columns:repeat(3,1fr); gap:30px 36px; margin-top:28px; }
+.refs > div { border-top:4px solid var(--tape); padding-top:18px; display:flex; flex-direction:column; min-width:0; }
+.refs .tipo { font-family:var(--font-mono); font-size:14px; letter-spacing:0.18em; color:var(--chalk-faint); text-transform:uppercase; }
+.refs b { font-family:var(--font-display); font-size:36px; color:var(--chalk); line-height:0.98; padding-top:0.06em; margin-top:8px; }
+.refs span { font-family:var(--font-body); font-size:21px; color:var(--chalk-dim); line-height:1.32; margin-top:8px; flex:1; }
+.refs a { font-family:var(--font-mono); font-size:19px; color:var(--stamp); text-decoration:none;
+          border-bottom:2px solid rgba(198,255,0,0.35); margin-top:12px; align-self:flex-start; }
+.refs a:hover, .refs a:focus-visible { border-bottom-color:var(--stamp); outline:none; }
+
+/* ===========================================
+   13. CHROME FORA DO PALCO
+   =========================================== */
+.deck-controls {
+    left:auto; right:26px; bottom:20px; transform:none;
+    font-family:var(--font-mono); font-size:13px; letter-spacing:0.2em;
+    color:rgba(241,236,225,0.45); background:rgba(20,17,13,0.8);
+    padding:7px 16px; border:1px solid rgba(241,236,225,0.12); user-select:none;
+}
+.edit-hotzone { position:fixed; top:0; left:0; width:80px; height:80px; z-index:10000; cursor:pointer; }
+.edit-toggle {
+    position:fixed; top:18px; left:18px; z-index:10001;
+    background:var(--tape); color:var(--ink); border:none; border-radius:4px;
+    font-size:18px; padding:9px 13px; cursor:pointer; opacity:0; pointer-events:none; transition:opacity .3s ease;
+}
+.edit-toggle.show, .edit-toggle.active { opacity:1; pointer-events:auto; }
+.edit-toggle.active { background:var(--stamp); }
+[contenteditable="true"] { outline:2px dashed var(--stamp); outline-offset:6px; cursor:text; }
+
+/* ===========================================
+   LOGO NO SLIDE DE ABERTURA
+   Lockup v2 da oficina. Entra só na capa, pra marcar a identidade sem
+   poluir os outros 16 slides.
+   =========================================== */
+.logo-hero { width:330px; height:auto; display:block; margin-bottom:28px; }
+</style>
+</head>
+<body>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+    <!-- ============ 01 · ABERTURA ============ -->
+    <section class="slide title-slide active visible" data-min="1">
+        <div class="clapper-bar"></div>
+        <div class="pad impact">
+            <img class="logo-hero reveal d1" src="assets/logo.png" alt="Tudo Vira Filme">
+            <div class="eyebrow reveal d2">Encontro 6 de 32 · Cine Teatro Ribalta</div>
+            <h1 class="wipe" style="font-size:150px">O QUADRO TEM BORDA.<br>O SOM NÃO TEM.</h1>
+            <p class="sub reveal d4">Quarta a gente aprendeu a escolher o que entra no quadro. Hoje a gente mexe na única coisa do filme que não cabe dentro dele.</p>
+        </div>
+        <div class="foot">VER · ESCOLHER · FAZER · MOSTRAR</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 02 · RODA ============ -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="ghost">02</div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Roda de abertura</div>
+            <h1 class="wipe" style="font-size:140px">O QUE FICOU<br>DE QUARTA?</h1>
+            <p class="sub reveal d4">Uma coisa só, a primeira que vier. Pode ser sobre a lente, pode ser sobre segurar a câmera, pode ser sobre o que deu errado.</p>
+        </div>
+        <div class="foot">TODO MUNDO FALA, INCLUSIVE EU</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 04 · A TESE ============ -->
+    <section class="slide" data-min="4">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">A ideia do dia</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:96px">O SOM ENTRA<br>SEM PEDIR LICENÇA</h1>
+            <div class="tres-regras">
+                <div class="reveal d3">
+                    <b>A IMAGEM VOCÊ ESCOLHE OLHAR</b>
+                    <span>Dá pra virar o rosto, fechar o olho, olhar o celular. A imagem depende de você apontar os olhos pra ela.</span>
+                </div>
+                <div class="reveal d5">
+                    <b>O SOM NÃO</b>
+                    <span>Ninguém fecha o ouvido. Ele chega antes de você decidir se quer. Por isso susto é som, e não imagem.</span>
+                </div>
+                <div class="reveal d7">
+                    <b>E ELE VEM DE FORA DO QUADRO</b>
+                    <span>O quadro tem quatro bordas. O som não tem nenhuma. O que você ouve e não vê é o jeito mais barato de fazer o mundo ficar grande.</span>
+                </div>
+            </div>
+        </div>
+        <div class="foot">METADE DO FILME ESTÁ FORA DA TELA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 05 · O SOM NÃO É O SOM ============
+         A virada da aula. Se eles saem so com isto, ja valeu. -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="ghost">05</div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">O segredo mais mal contado do cinema</div>
+            <h1 class="wipe" style="font-size:132px">O SOM DE UMA COISA<br>QUASE NUNCA É<br>O SOM DELA</h1>
+            <p class="sub reveal d5">Osso quebrando é aipo. Soco é toalha molhada. Fogo grande é celofane. Gravar o som de verdade quase sempre decepciona, e quem descobre isso vira <em>foley artist</em>.</p>
+        </div>
+        <div class="foot">FOLEY · O OFÍCIO DE MENTIR COM PRECISÃO</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 06 · POR QUE NÃO BASTA GRAVAR O REAL ============ -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Por que mentir funciona melhor</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:100px">O REAL CHEGA FRACO</h1>
+            <div class="duas-col">
+                <div class="reveal d3">
+                    <em>O QUE ACONTECE NA VIDA</em>
+                    <b>UM SOM SÓ,<br>MISTURADO<br>COM TUDO</b>
+                    <span>O microfone é burro: ele pega o passo, o vento, o carro, a geladeira, a sua respiração, tudo no mesmo peso. O som certo se perde no meio.</span>
+                </div>
+                <div class="reveal d6">
+                    <em>O QUE O FOLEY FAZ</em>
+                    <b>UM SOM SÓ,<br>LIMPO,<br>NA MEDIDA</b>
+                    <span>Sozinho, perto do microfone, sem nada em volta. Aí dá pra decidir se aquele passo é de quem está com medo ou de quem está com pressa.</span>
+                </div>
+            </div>
+        </div>
+        <div class="foot">NÃO É TRUQUE DE PREGUIÇOSO, É CONTROLE</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 07 · APARTADA, OS TRES MOMENTOS ============
+         Frames tirados do proprio filme (Referencias/APARTADA_2021_5min.mp4).
+         A ideia e mostrar que cada situacao dessas virou um som feito na mao,
+         antes de rodar o trecho no slide seguinte. -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Filme da casa · 2021</div>
+            <h1 class="wipe" style="margin-top:12px;font-size:84px">APARTADA, SOM POR SOM</h1>
+            <div class="tiras">
+                <div class="tira reveal d3">
+                    <img src="assets/apartada/f-78.jpg" alt="">
+                    <b>O QUARTO</b>
+                    <span>Passo no piso, barra do vestido, celular na mão. <i>Tudo feito depois, em pé numa sala vazia.</i></span>
+                </div>
+                <div class="tira reveal d5">
+                    <img src="assets/apartada/f-214.jpg" alt="">
+                    <b>A MESA</b>
+                    <span>Copo, tecla, gelo. <i>O copo é outro copo. A tecla é outro teclado.</i></span>
+                </div>
+                <div class="tira reveal d7">
+                    <img src="assets/apartada/f-262.jpg" alt="">
+                    <b>O ESPELHO</b>
+                    <span>Torneira, respiração, o silêncio do banheiro. <i>O silêncio também foi gravado de propósito.</i></span>
+                </div>
+            </div>
+        </div>
+        <div class="foot">DOIS DIAS DE FOLEY · NENHUM SOM VEIO DO SET</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 07b · APARTADA, O TRECHO ============ -->
+    <section class="slide slide-plano" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="plano-topo reveal d1">
+                <div class="num">07</div>
+                <div class="nm">APARTADA</div>
+                <div class="dur">4:56 · CLIQUE NA IMAGEM PRA PAUSAR</div>
+            </div>
+            <div class="plano-palco reveal d3"
+                 data-arquivo="assets/apartada.mp4"
+                 data-vazio="APARTADA<br>filme de 5 minutos, 2021<br>peça pro Buck se quiser rever"></div>
+            <div class="plano-baixo reveal d5">
+                <b>O QUE OUVIR</b>
+                <span>Fecha o olho num pedaço e presta atenção só no que chega. Nada disso estava lá quando a câmera rodou.</span>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 08 · BEN BURTT / WALL-E ============
+         Arquivo opcional: assets/walle-som.mp4 (trecho do doc do DVD).
+         Sem o arquivo, o slide vira cartao com o link pra abrir no navegador. -->
+    <section class="slide slide-plano" data-min="6">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="plano-topo reveal d1">
+                <div class="num">02</div>
+                <div class="nm">BEN BURTT · WALL-E</div>
+                <div class="dur">TRECHO</div>
+            </div>
+            <div class="plano-palco reveal d3" data-arquivo="assets/walle-som.mp4" data-vazio="WALL-E<br>clique no botão verde aí embaixo<br>pra abrir no YouTube">
+            </div>
+            <div class="plano-baixo reveal d5">
+                <b>O QUE OUVIR</b>
+                <span>O robô não fala nenhuma palavra e você entende tudo. E o cara que fez isso é o mesmo que fez o sabre de luz com um projetor velho zumbindo.</span>
+                <a class="link-grande" style="margin-top:0;margin-left:auto;flex-shrink:0"
+                   href="https://www.youtube.com/watch?v=QHaXrWVHPps" target="_blank" rel="noopener">
+                   ABRIR NO YOUTUBE <em>QHaXrWVHPps</em></a>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 09 · MICROFONE E GRAVADOR ============
+         Frase curta por tipo. O aprofundamento e oral.
+         Arquivos esperados em assets/microfones/ -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Antes de pegar o equipamento</div>
+            <h1 class="wipe" style="margin-top:12px;font-size:78px">O GRAVADOR É O CADERNO.<br>O MICROFONE É O OUVIDO.</h1>
+            <p class="reveal d2" style="margin-top:18px;font-size:30px;max-width:1500px">Um guarda o som. O outro decide qual som chega. Trocar de gravador muda pouco. <strong>Trocar de microfone, ou só chegar mais perto com ele, muda tudo.</strong></p>
+            <div class="mics">
+                <div class="mic reveal d4">
+                    <img data-mic="lapela" alt="">
+                    <b>LAPELA</b>
+                    <i>PRESO NA ROUPA</i>
+                    <span>Anda com a pessoa. Pega a voz limpa e ignora o resto. É o microfone da entrevista e do diálogo.</span>
+                </div>
+                <div class="mic reveal d5">
+                    <img data-mic="boom" alt="">
+                    <b>BOOM</b>
+                    <i>NA VARA, FORA DO QUADRO</i>
+                    <span>Aponta. Escuta em linha reta e recusa o que está do lado. É o nosso hoje, e ele tem enquadramento igual lente.</span>
+                </div>
+                <div class="mic reveal d6">
+                    <img data-mic="camera" alt="">
+                    <b>MIC DA CÂMERA</b>
+                    <i>EMBUTIDO</i>
+                    <span>Fica onde a câmera está, longe de tudo. Serve pra guia e pra não perder a cena. Quase nunca serve pro filme.</span>
+                </div>
+            </div>
+        </div>
+        <div class="foot">MIRAR O BOOM É ENQUADRAR O SOM</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 10 · CAPTAÇÃO NA PRÁTICA ============ -->
+    <section class="slide" data-min="4">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Três coisas pra não perder a gravação</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:104px">O QUE EU VOU<br>PEDIR PRA VOCÊS</h1>
+            <div class="tres-regras">
+                <div class="reveal d3">
+                    <b>PERTO, MAS NÃO EM CIMA</b>
+                    <span>Um palmo e meio do objeto. Perto demais, o som estoura e vira chiado. Longe, entra a sala inteira junto.</span>
+                </div>
+                <div class="reveal d5">
+                    <b>SILÊNCIO DE VERDADE</b>
+                    <span>Enquanto um grava, os outros nem respiram alto. O microfone não sabe separar você do som que ele veio buscar.</span>
+                </div>
+                <div class="reveal d7">
+                    <b>TRÊS VEZES, SEM PENSAR</b>
+                    <span>Faz o som três vezes seguidas, com diferença entre elas. Na edição eu escolho. Uma tomada só quase nunca serve.</span>
+                </div>
+            </div>
+        </div>
+        <div class="foot">O QUE ESTOURA NÃO SE CONSERTA DEPOIS</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ 11 · O EXERCÍCIO ============ -->
+    <section class="slide" data-min="4">
+        <div class="clapper-bar"></div>
+        <div class="ghost">11</div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">O exercício de hoje</div>
+            <h1 class="wipe" style="margin-top:12px;font-size:112px">VOCÊ VAI SER<br>O SOM DISSO</h1>
+            <ul class="regras">
+                <li class="reveal d3"><span>01</span>Você escolhe um plano da lista. Ele não tem som nenhum.</li>
+                <li class="reveal d4"><span>02</span>Você olha, decide com que objeto da sala vai fazer aquele som, e testa.</li>
+                <li class="reveal d5"><span>03</span>Cinco minutos com o gravador na mão. O resto da turma fica em silêncio.</li>
+                <li class="reveal d6"><span>04</span>Eu levo pra casa, monto o som em cima da imagem, e na próxima aula a gente assiste.</li>
+            </ul>
+            <p class="reveal d7" style="margin-top:38px;font-size:32px"><strong>A regra que importa:</strong> é proibido usar o objeto certo. Se o plano é de uma faca, você não pode usar uma faca.</p>
+        </div>
+        <div class="foot">CADA UM ESCOLHE O SEU · 5 MINUTOS CADA · UM DE CADA VEZ</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ BANCO DE PLANOS ============
+         Grade com todos os planos disponiveis, pra consulta rapida durante
+         a rodagem. Gerada pelo JS a partir da lista PLANOS. -->
+    <section class="slide" data-min="3" id="slideBanco">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Os planos</div>
+            <h1 class="wipe" style="margin-top:10px;font-size:84px">ESCOLHE O SEU</h1>
+            <div class="banco" id="bancoPlanos"></div>
+        </div>
+        <div class="foot">VOU MANDAR TODOS NO GRUPO · ABRE NO CELULAR ENQUANTO GRAVA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ancora: os slides de cada plano entram aqui, gerados pelo JS -->
+    <div id="ancoraPlanos" hidden></div>
+
+    <!-- ============ RODAGEM ============ -->
+    <section class="slide" data-min="22">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Rodagem</div>
+            <h1 class="wipe" style="font-size:96px">GRAVANDO</h1>
+            <div class="timer-wrap">
+                <div class="timer parado" id="cronometro" data-seg="300">05:00</div>
+                <div class="timer-dica">CLIQUE NO NÚMERO PRA COMEÇAR E PRA PAUSAR</div>
+            </div>
+        </div>
+        <div class="foot">5 MINUTOS POR PESSOA · PASSA DO ZERO E CONTINUA CONTANDO</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ ESCUTA COLETIVA ============ -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Escuta, de olho fechado</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:100px">SÓ O SOM,<br>SEM A IMAGEM</h1>
+            <p class="reveal d3" style="margin-top:26px;font-size:34px;max-width:1450px">A gente ouve o que cada um gravou <strong>sem ver o plano</strong>. A turma adivinha o que é. Se acertar, o som está contando sozinho. Se errar, também é informação: significa que o som só funciona colado na imagem, e isso não é defeito, é outra coisa.</p>
+            <div class="tres-regras" style="padding-bottom:20px">
+                <div class="reveal d5">
+                    <b>ACERTARAM</b>
+                    <span>O som carrega a cena inteira sozinho. Dá pra tirar a imagem e ainda entender.</span>
+                </div>
+                <div class="reveal d6">
+                    <b>ERRARAM</b>
+                    <span>O som precisa da imagem pra fazer sentido. A maioria do cinema é assim.</span>
+                </div>
+                <div class="reveal d7">
+                    <b>ACHARAM OUTRA COISA</b>
+                    <span>Esse é o mais interessante. Você inventou um som que serve pra um filme que ninguém fez ainda.</span>
+                </div>
+            </div>
+        </div>
+        <div class="foot">DE OLHO FECHADO, TODO MUNDO</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ FECHAMENTO ============ -->
+    <section class="slide" data-min="4">
+        <div class="clapper-bar"></div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Pra próxima</div>
+            <h1 class="wipe" style="font-size:128px">EU EDITO,<br>VOCÊS ASSISTEM</h1>
+            <p class="sub reveal d4">Levo o que vocês gravaram hoje, monto em cima dos planos, e a gente abre a próxima aula com isso na tela. Até lá, uma tarefa só: <strong>fecha o olho em algum lugar por um minuto e repara em quantos sons você consegue separar.</strong></p>
+        </div>
+        <div class="foot">PRÓXIMO ENCONTRO · O SOM QUE VOCÊS FIZERAM, MONTADO</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ============ PRA VER DEPOIS ============
+         Padrao do curso a partir do Encontro 5: toda aula fecha com curadoria
+         de video sobre o tema, e a lista vai pro repositorio da turma. -->
+    <section class="slide" data-min="0">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Pra ver depois, em casa</div>
+            <h1 class="wipe" style="margin-top:8px;font-size:78px">SOM · O QUE VALE ASSISTIR</h1>
+            <div class="refs">
+                <div class="reveal d2">
+                    <div class="tipo">Documentário · 20 min</div>
+                    <b>THE SECRET WORLD OF FOLEY</b>
+                    <span>Sem uma palavra de narração. Só duas pessoas numa sala fazendo o som de um filme inteiro com sucata. Se você vir um só, veja este.</span>
+                    <a href="https://www.youtube.com/watch?v=f78yF33k3ts" target="_blank" rel="noopener">youtube · f78yF33k3ts</a>
+                </div>
+                <div class="reveal d3">
+                    <div class="tipo">Reportagem · 6 min</div>
+                    <b>FOLEY ARTISTS: HOW MOVIE SOUND EFFECTS ARE MADE</b>
+                    <span>A explicação mais direta do ofício, com os objetos na mão e o resultado na tela em seguida.</span>
+                    <a href="https://www.youtube.com/watch?v=U_tqB4IZvMk" target="_blank" rel="noopener">youtube · U_tqB4IZvMk</a>
+                </div>
+                <div class="reveal d4">
+                    <div class="tipo">Making of · 18 min</div>
+                    <b>WALL-E · BUILDING WORLDS FROM THE SOUND UP</b>
+                    <span>O doc que vinha no DVD. Ben Burtt mostra de onde saiu cada ruído do robô, e nenhum deles é de robô.</span>
+                    <a href="https://www.youtube.com/watch?v=QHaXrWVHPps" target="_blank" rel="noopener">youtube · QHaXrWVHPps</a>
+                </div>
+                <div class="reveal d5">
+                    <div class="tipo">Demonstração · 8 min</div>
+                    <b>BEN BURTT DEMONSTRA OS SONS DE WALL-E</b>
+                    <span>Ele ao vivo, com os objetos, fazendo os sons na frente das pessoas. Mais curto e mais impressionante.</span>
+                    <a href="https://www.youtube.com/watch?v=PEh19fPlo0I" target="_blank" rel="noopener">youtube · PEh19fPlo0I</a>
+                </div>
+                <div class="reveal d6">
+                    <div class="tipo">Perfil · 9 min</div>
+                    <b>GARY HECKER, FOLEY ARTIST · SOUNDWORKS</b>
+                    <span>Quarenta anos de ofício num estúdio cheio de tranqueira organizada. Repare na quantidade de sapato que ele tem.</span>
+                    <a href="https://www.youtube.com/watch?v=ww5vsogvY6Y" target="_blank" rel="noopener">youtube · ww5vsogvY6Y</a>
+                </div>
+                <div class="reveal d7">
+                    <div class="tipo">Vídeo ensaio · 11 min</div>
+                    <b>HOW WALTER MURCH WORLDIZED FILM SOUND</b>
+                    <span>Sai do Foley e entra na ideia grande: o som não precisa ser fiel, precisa ser verdadeiro. Legenda automática ajuda.</span>
+                    <a href="https://www.youtube.com/watch?v=gAN9pBY7jHA" target="_blank" rel="noopener">youtube · gAN9pBY7jHA</a>
+                </div>
+            </div>
+        </div>
+        <div class="foot">TUDO ISSO FICA NO SITE DA TURMA</div>
+        <div class="grain"></div>
+    </section>
+
+</main>
+</div>
+
+<div class="deck-controls" id="deckCounter">01 / 16</div>
+<div class="edit-hotzone" aria-hidden="true"></div>
+<button class="edit-toggle" id="editToggle" title="Modo de edição (E)">✏️</button>
+
+<script>
+/* ===========================================
+   OS PLANOS DO EXERCÍCIO
+   Esta é a única lista que precisa ser editada quando os vídeos chegarem.
+   Cada plano gera duas coisas sozinho: uma célula no banco e um slide
+   inteiro pra projetar na hora da gravação.
+
+   arquivo   nome do arquivo em assets/planos/ (sem a pasta)
+   nome      como aparece na tela, curto
+   com       com o que dá pra fazer aquele som aqui na Ribalta
+   dur       duração do plano, só pra referência do educador
+
+   Pra tirar um plano da lista, comente a linha dele.
+   =========================================== */
+const PLANOS = [
+    { arquivo:'01-relogio.mp4',  nome:'RELÓGIO POR DENTRO',  dur:'0:10', com:'caneta de clique, chaveiro balançando, unha correndo no pente' },
+    { arquivo:'02-projetor.mp4', nome:'PROJETOR RODANDO',    dur:'0:06', com:'carta presa no raio da bicicleta, unha no pente, zíper devagar' },
+    { arquivo:'03-curto.mp4',    nome:'CURTO-CIRCUITO',      dur:'0:10', com:'rasgar fita adesiva em tirões curtos, velcro, celofane' },
+    { arquivo:'04-olho.mp4',     nome:'OLHO PISCANDO',       dur:'0:11', com:'nada. Piscar não faz som nenhum. Esse você inventa do zero' },
+    { arquivo:'05-maquina.mp4',  nome:'MÁQUINA DE ESCREVER', dur:'0:08', com:'caneta batendo na mesa, unha no vidro, tampa de caneta' },
+    { arquivo:'06-torneira.mp4', nome:'TORNEIRA PINGANDO',   dur:'0:14', com:'proibido usar água: faz com a boca, com a unha, com uma tampa' },
+    { arquivo:'07-ovo.mp4',      nome:'OVO QUEBRANDO',       dur:'0:17', com:'proibido usar ovo: giz quebrando, e um pano molhado escorrendo' },
+];
+
+/* ===========================================
+   CONTROLADOR DA APRESENTAÇÃO
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        /* Os slides de plano nascem antes de qualquer coisa: o resto do deck
+           conta slide e minuto, e precisa encontrar tudo já no lugar. */
+        this.montarPlanos();
+
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.stage = document.getElementById('deckStage');
+        this.counter = document.getElementById('deckCounter');
+        this.current = 0;
+        this.montarPalcos();
+        this.montarImagens('[data-mic]',    'mic',    p => `assets/microfones/${p}.jpg`);
+        this.montarImagens('[data-quarta]', 'quarta', p => `assets/quarta/${p}.jpg`);
+        this.buildSlates();
+        this.setupStageScale();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.setupCronometro();
+        this.setupVideos();
+        this.showSlide(0);
+    }
+
+    /* Grade do banco e um slide por plano, tudo a partir de PLANOS.
+       Os slides de plano levam data-min="0" de propósito: o tempo deles já
+       está dentro do bloco de rodagem, e contar de novo estouraria os 90. */
+    montarPlanos() {
+        const banco = document.getElementById('bancoPlanos');
+        const ancora = document.getElementById('ancoraPlanos');
+        if (!banco || !ancora) return;
+
+        banco.innerHTML = PLANOS.map((p, i) => {
+            const n = String(i + 1).padStart(2, '0');
+            return `<div class="item" data-plano="${n}">
+                <div class="moldura">
+                    <video muted preload="metadata"
+                           data-fonte="assets/planos/${p.arquivo}"
+                           data-frame="assets/planos/${p.arquivo.replace('.mp4','.jpg')}"></video>
+                </div>
+                <div class="nm">${n} · ${p.nome}</div>
+                <div class="cm">${p.com}</div>
+            </div>`;
+        }).join('');
+
+        PLANOS.forEach((p, i) => {
+            const n = String(i + 1).padStart(2, '0');
+            const sec = document.createElement('section');
+            sec.className = 'slide slide-plano';
+            sec.dataset.min = '0';
+            sec.dataset.plano = n;
+            sec.innerHTML = `
+                <div class="clapper-bar"></div>
+                <div class="pad">
+                    <div class="plano-topo reveal d1">
+                        <div class="num">${n}</div>
+                        <div class="nm">${p.nome}</div>
+                        <div class="dur">${p.dur} · EM LOOP</div>
+                    </div>
+                    <div class="plano-palco reveal d3"
+                         data-arquivo="assets/planos/${p.arquivo}"
+                         data-frame="assets/planos/${p.arquivo.replace('.mp4','.jpg')}"
+                         data-loop="1"
+                         data-vazio="${n}<br>o vídeo fica fora do site<br>pra ele abrir rápido no celular"></div>
+                    <div class="plano-baixo reveal d5">
+                        <b>DÁ PRA FAZER COM</b>
+                        <span>${p.com}</span>
+                    </div>
+                </div>
+                <div class="grain"></div>`;
+            ancora.parentNode.insertBefore(sec, ancora);
+        });
+    }
+
+    /* Palcos de vídeo: tenta o arquivo, e se ele não existir vira espaço
+       reservado dizendo exatamente onde salvar. Nenhum vídeo toca sozinho,
+       quem aperta o play é o educador. Os planos do exercício vão em loop,
+       porque o aluno precisa ver a ação repetindo enquanto tenta o som. */
+    montarPalcos() {
+        const avisar = (palco) => {
+            const box = document.createElement('div');
+            box.className = 'vazio';
+            const p = palco.dataset.vazio.split('<br>');
+            box.innerHTML = `<b>${p[0]}</b>` + p.slice(1).join('<br>');
+            palco.appendChild(box);
+        };
+
+        document.querySelectorAll('.plano-palco[data-arquivo]').forEach(palco => {
+            const v = document.createElement('video');
+            v.className = 'video-aula';
+            v.preload = 'metadata';
+            v.playsInline = true;
+            if (palco.dataset.loop) v.loop = true;
+            v.src = palco.dataset.arquivo;
+            v.addEventListener('error', () => {
+                v.remove();
+                const btn = palco.querySelector('.botao-play');
+                if (btn) btn.remove();
+                /* Sem o vídeo, tenta o frame do plano. Só se ele também faltar
+                   é que aparece o aviso dizendo onde salvar o arquivo. */
+                const frame = palco.dataset.frame;
+                if (frame) {
+                    const img = document.createElement('img');
+                    img.className = 'frame';
+                    img.src = frame;
+                    img.alt = '';
+                    img.addEventListener('error', () => { img.remove(); avisar(palco); });
+                    palco.appendChild(img);
+                    const selo = document.createElement('div');
+                    selo.className = 'selo';
+                    selo.textContent = 'O PLANO QUE A GENTE SONORIZOU NA AULA';
+                    palco.appendChild(selo);
+                } else {
+                    avisar(palco);
+                }
+            });
+            palco.appendChild(v);
+            const btn = document.createElement('button');
+            btn.className = 'botao-play';
+            btn.textContent = 'PLAY';
+            palco.appendChild(btn);
+            palco.closest('.slide').classList.add('slide-video');
+        });
+
+        /* Miniaturas do banco: mesmo raciocínio, sem play. */
+        document.querySelectorAll('.banco video[data-fonte]').forEach(v => {
+            v.src = v.dataset.fonte;
+            v.addEventListener('error', () => {
+                const moldura = v.closest('.moldura');
+                const cel = v.closest('.item');
+                const n = cel ? cel.dataset.plano : '';
+                v.remove();
+                const img = document.createElement('img');
+                img.src = v.dataset.frame;
+                img.alt = '';
+                img.addEventListener('error', () => {
+                    img.remove();
+                    const box = document.createElement('div');
+                    box.className = 'vazio';
+                    box.innerHTML = `<b>${n}</b>${v.dataset.fonte.replace('assets/planos/', '')}`;
+                    moldura.appendChild(box);
+                });
+                moldura.appendChild(img);
+            });
+        });
+    }
+
+    /* Fotos ilustrativas (microfones) e resultados de quarta: entram sozinhas
+       quando os arquivos existirem. Sem arquivo, espaço reservado com o
+       caminho esperado, pra não precisar mexer no HTML pra encaixar. */
+    montarImagens(seletor, chave, caminho) {
+        document.querySelectorAll('img' + seletor).forEach(img => {
+            const p = img.dataset[chave];
+            img.src = caminho(p);
+            img.addEventListener('error', () => {
+                const box = document.createElement('div');
+                box.className = 'aguardando vazio';
+                box.innerHTML = `<span>${p.replace(/-/g, ' ').toUpperCase()}</span>${caminho(p)}`;
+                img.replaceWith(box);
+            });
+        });
+    }
+
+    /* Claquete de canto a partir do data-min. O acumulado é somado aqui,
+       então nunca desencontra do tempo individual. */
+    buildSlates() {
+        let acumulado = 0;
+        this.slides.forEach((slide, i) => {
+            const min = parseInt(slide.dataset.min || '0', 10);
+            acumulado += min;
+            const el = document.createElement('div');
+            el.className = 'slate';
+            el.innerHTML =
+                `<span class="n">${String(i + 1).padStart(2, '0')}</span>` +
+                `<span class="t">${min}'</span>` +
+                `<span class="acc">${acumulado}' DE 90'</span>`;
+            slide.appendChild(el);
+        });
+        this.totalMin = acumulado;
+    }
+
+    setupStageScale() {
+        const scale = () => {
+            const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const x = (window.innerWidth - 1920 * factor) / 2;
+            const y = (window.innerHeight - 1080 * factor) / 2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+        };
+        scale();
+        window.addEventListener('resize', scale);
+    }
+
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') return;
+            /* Em slide de vídeo o espaço toca e pausa, em vez de avançar: é o
+               reflexo de quem apresenta, e as setas continuam navegando. */
+            if (e.key === ' ') {
+                const v = this.slides[this.current].querySelector('.video-aula');
+                if (v) { e.preventDefault(); v.paused ? v.play() : v.pause(); return; }
+            }
+            switch (e.key) {
+                case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+                    e.preventDefault(); this.next(); break;
+                case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+                    e.preventDefault(); this.prev(); break;
+                case 'Home': e.preventDefault(); this.showSlide(0); break;
+                case 'End':  e.preventDefault(); this.showSlide(this.slides.length - 1); break;
+            }
+        });
+    }
+
+    setupTouchNav() {
+        let startX = 0, startY = 0;
+        document.addEventListener('touchstart', (e) => {
+            startX = e.changedTouches[0].clientX; startY = e.changedTouches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? this.next() : this.prev();
+        }, { passive: true });
+    }
+
+    setupWheelNav() {
+        let lock = false;
+        document.addEventListener('wheel', (e) => {
+            if (lock || Math.abs(e.deltaY) < 24) return;
+            lock = true;
+            e.deltaY > 0 ? this.next() : this.prev();
+            setTimeout(() => { lock = false; }, 700);
+        }, { passive: true });
+    }
+
+    /* Cronômetro regressivo da rodagem. Clique no número inicia e pausa.
+       Conta pelo relógio de parede, não por tique de setInterval: o navegador
+       congela os intervalos de uma aba que não está na frente, e foi isso que
+       travou o cronômetro numa aula quando o educador trocou pro player de
+       vídeo. Guardando o instante de fim, qualquer tique atrasado recalcula
+       o tempo certo. E passa do zero pro negativo, sem parar. */
+    setupCronometro() {
+        const el = document.getElementById('cronometro');
+        if (!el) return;
+        const total = parseInt(el.dataset.seg, 10);
+        let fim = null, pausadoEm = total, intervalo = null;
+        const restante = () => fim === null ? pausadoEm : Math.round((fim - Date.now()) / 1000);
+        const pinta = () => {
+            const r = restante(), neg = r < 0, a = Math.abs(r);
+            const m = Math.floor(a / 60), s = a % 60;
+            el.textContent = `${neg ? '-' : ''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            el.classList.toggle('acabando', r <= 60);
+            el.classList.toggle('parado', fim === null && r > 0);
+        };
+        el.addEventListener('click', () => {
+            if (fim === null) {
+                fim = Date.now() + pausadoEm * 1000;
+                intervalo = setInterval(pinta, 250);
+            } else {
+                pausadoEm = restante(); fim = null;
+                clearInterval(intervalo);
+            }
+            pinta();
+        });
+        /* ao voltar pra aba, repinta na hora em vez de esperar o próximo tique */
+        document.addEventListener('visibilitychange', pinta);
+        window.addEventListener('focus', pinta);
+        pinta();
+    }
+
+    setupVideos() {
+        document.querySelectorAll('.slide-video').forEach(slide => {
+            const v = slide.querySelector('.video-aula');
+            const btn = slide.querySelector('.botao-play');
+            if (!v) return;
+            const capa = on => slide.classList.toggle('tocando', on);
+            if (btn) btn.addEventListener('click', () => v.play());
+            v.addEventListener('play',  () => capa(true));
+            v.addEventListener('pause', () => capa(false));
+            v.addEventListener('ended', () => { capa(false); v.currentTime = 0; });
+            /* Clicar na imagem pausa: dá pra travar num instante e perguntar
+               "que som é esse aí?" sem sair do slide. */
+            v.addEventListener('click', () => { if (!v.paused) v.pause(); });
+        });
+    }
+
+    next() { this.showSlide(this.current + 1); }
+    prev() { this.showSlide(this.current - 1); }
+
+    showSlide(index) {
+        this.current = Math.max(0, Math.min(index, this.slides.length - 1));
+        this.slides.forEach((slide, i) => {
+            const on = i === this.current;
+            slide.classList.toggle('active', on);
+            slide.classList.toggle('visible', on);
+        });
+        const n = String(this.current + 1).padStart(2, '0');
+        const t = String(this.slides.length).padStart(2, '0');
+        this.counter.textContent = `${n} / ${t}`;
+        this.rodarVideos();
+    }
+
+    /* Sair do slide rebobina, pra exibição nenhuma começar no meio se você
+       voltar nele depois. */
+    rodarVideos() {
+        this.slides.forEach((slide, i) => {
+            if (i === this.current) return;
+            slide.querySelectorAll('video').forEach(v => { v.pause(); v.currentTime = 0; });
+        });
+    }
+
+}
+
+/* ===========================================
+   EDIÇÃO INLINE
+   =========================================== */
+class InlineEditor {
+    constructor() {
+        this.isActive = false;
+        this.key = 'tvf-pub-encontro6';
+        this.targets = 'h1, h2, h3, p, li, .plano-baixo span, .legenda, .eyebrow, .foot';
+        this.restore();
+    }
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        const btn = document.getElementById('editToggle');
+        btn.classList.toggle('active', this.isActive);
+        btn.classList.toggle('show', this.isActive);
+        document.querySelectorAll('.slide ' + this.targets).forEach((el, i) => {
+            if (el.querySelector(this.targets)) return;
+            el.setAttribute('contenteditable', this.isActive ? 'true' : 'false');
+            el.dataset.editId = el.dataset.editId || 'e' + i;
+            if (this.isActive) el.addEventListener('blur', () => this.save(), { once: true });
+        });
+        if (!this.isActive) this.save();
+    }
+    save() {
+        const data = {};
+        document.querySelectorAll('[data-edit-id]').forEach(el => { data[el.dataset.editId] = el.innerHTML; });
+        try { localStorage.setItem(this.key, JSON.stringify(data)); } catch (e) {}
+    }
+    restore() {
+        let data;
+        try { data = JSON.parse(localStorage.getItem(this.key) || '{}'); } catch (e) { return; }
+        document.querySelectorAll('.slide ' + this.targets).forEach((el, i) => {
+            const id = 'e' + i;
+            if (data[id] !== undefined && !el.querySelector(this.targets)) {
+                el.dataset.editId = id; el.innerHTML = data[id];
+            }
+        });
+    }
+}
+
+const deck = new SlidePresentation();
+const editor = new InlineEditor();
+
+const hotzone = document.querySelector('.edit-hotzone');
+const editToggle = document.getElementById('editToggle');
+let hideTimeout = null;
+hotzone.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); editToggle.classList.add('show'); });
+hotzone.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400); });
+editToggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+editToggle.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400); });
+editToggle.addEventListener('click', (e) => { e.stopPropagation(); editor.toggleEditMode(); });
+hotzone.addEventListener('click', () => editor.toggleEditMode());
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'e' || e.key === 'E') && !(e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true')) {
+        editor.toggleEditMode();
+    }
+});
+</script>
+</body>
+</html>
