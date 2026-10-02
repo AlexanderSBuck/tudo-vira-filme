@@ -428,6 +428,26 @@ strong { color:var(--chalk); font-weight:700; }
    poluir os outros 16 slides.
    =========================================== */
 .logo-hero { width:330px; height:auto; display:block; margin-bottom:28px; }
+
+/* ===========================================
+   CANAL DO CONVIDADO
+   Três vídeos do WARPLAB, com a capa do YouTube. A capa é o que faz o aluno
+   clicar depois: título solto numa lista ninguém abre.
+   =========================================== */
+.canal { display:grid; grid-template-columns:repeat(3,1fr); gap:34px; margin-top:28px; }
+.canal a { display:flex; flex-direction:column; min-width:0; text-decoration:none; color:inherit;
+    transition:transform 0.2s var(--snap); }
+.canal a:hover, .canal a:focus-visible { transform:translateY(-5px); outline:none; }
+.canal .capa { position:relative; width:100%; aspect-ratio:16/9; background:#0A0806;
+    border:1px solid rgba(241,236,225,0.12); overflow:hidden; }
+.canal .capa img { width:100%; height:100%; object-fit:cover; display:block; }
+.canal .dur { position:absolute; right:0; bottom:0; background:var(--ink); color:var(--chalk);
+    font-family:var(--font-mono); font-size:15px; padding:5px 10px; }
+.canal b { font-family:var(--font-display); font-size:36px; color:var(--chalk); line-height:1.02;
+    padding-top:0.06em; margin-top:14px; }
+.canal .ver { font-family:var(--font-mono); font-size:17px; color:var(--stamp); margin-top:10px;
+    border-bottom:2px solid rgba(198,255,0,0.35); align-self:flex-start; }
+.canal a:hover .ver { border-bottom-color:var(--stamp); }
 </style>
 </head>
 <body>
@@ -632,29 +652,34 @@ strong { color:var(--chalk); font-weight:700; }
         <div class="grain"></div>
     </section>
 
-    <!-- 10 CONVIDADO · REMOVER SE O ANDRÉ NÃO VIER -->
+    <!-- CONVIDADO · ANDRÉ RIOS, do canal WARPLAB.
+         Esteve no encontro de 30/09. Os três vídeos ficam aqui pra turma ver
+         em casa, porque são mais longos do que cabe numa aula. -->
     <section class="slide convidado" data-min="12" id="slideConvidado">
         <div class="clapper-bar"></div>
         <div class="pad">
-            <div class="reveal d1"><span class="convidado-tag">CONVIDADO DA CASA</span></div>
-            <h1 class="wipe" style="font-size:104px">ANDRÉ RIOS<br>EFEITOS ESPECIAIS</h1>
-            <p class="reveal d3" style="margin-top:26px;font-size:34px;max-width:1500px">Se tem uma pessoa que não pode chegar no set sem saber exatamente o que vai filmar, é quem faz efeito. <strong>Um plano com efeito mal planejado não tem conserto depois.</strong></p>
-            <div class="tres-regras" style="padding-bottom:20px">
-                <div class="reveal d5">
-                    <b>O QUE PERGUNTAR</b>
-                    <span>O que você precisa saber antes que a câmera ligue? O que não dá pra resolver depois?</span>
-                </div>
-                <div class="reveal d6">
-                    <b>O QUE PERGUNTAR</b>
-                    <span>Qual foi a vez que faltou um plano e você teve que inventar na marra?</span>
-                </div>
-                <div class="reveal d7">
-                    <b>O QUE PERGUNTAR</b>
-                    <span>Tem algum efeito que dá pra fazer com nada, só com a câmera e a cabeça?</span>
-                </div>
+            <div class="reveal d1"><span class="convidado-tag">CONVIDADO DA CASA · 30/09</span></div>
+            <h1 class="wipe" style="margin-top:14px;font-size:88px">ANDRÉ RIOS · WARPLAB</h1>
+            <p class="reveal d2" style="margin-top:18px;font-size:30px;max-width:1620px">Técnico em efeitos visuais. Contou como entrou no ofício e por onde o efeito andou nas últimas décadas, do truque feito na câmera ao que se faz hoje no computador. <strong>E a lição que amarra com a aula: efeito é a coisa que mais precisa estar resolvida no papel antes de alguém ligar a câmera.</strong></p>
+            <div class="canal">
+                <a class="reveal d4" href="https://www.youtube.com/watch?v=lCjxgY68pJo" target="_blank" rel="noopener">
+                    <div class="capa"><img src="assets/warplab/1-introducao.jpg" alt=""><span class="dur">3:26</span></div>
+                    <b>INTRODUÇÃO AOS<br>EFEITOS VISUAIS</b>
+                    <span class="ver">↗ comece por este</span>
+                </a>
+                <a class="reveal d5" href="https://www.youtube.com/watch?v=DTRMKKHasc4" target="_blank" rel="noopener">
+                    <div class="capa"><img src="assets/warplab/2-conceitos.jpg" alt=""><span class="dur">9:44</span></div>
+                    <b>CONCEITOS BÁSICOS<br>DOS EFEITOS VISUAIS</b>
+                    <span class="ver">↗ o vocabulário do ofício</span>
+                </a>
+                <a class="reveal d6" href="https://www.youtube.com/watch?v=qi-n5OnpLMI" target="_blank" rel="noopener">
+                    <div class="capa"><img src="assets/warplab/3-historia.jpg" alt=""><span class="dur">26:55</span></div>
+                    <b>A HISTÓRIA DOS<br>EFEITOS VISUAIS</b>
+                    <span class="ver">↗ o que ele contou, inteiro</span>
+                </a>
             </div>
         </div>
-        <div class="foot">12 MINUTOS · PERGUNTA LIVRE DEPOIS</div>
+        <div class="foot">OS TRÊS ESTÃO NO SITE DA TURMA · É SÓ CLICAR NA CAPA</div>
         <div class="grain"></div>
     </section>
 
