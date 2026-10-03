@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tudo Vira Filme · Encontro 8</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+/* ===========================================
+   1. TOKENS DA IDENTIDADE "SLATE & PATCH"
+   =========================================== */
+:root {
+    --ink:        #14110D;
+    --ink-2:      #1E1A14;
+    --ink-3:      #26211A;
+    --chalk:      #F1ECE1;
+    --chalk-dim:  #B3A99A;
+    --chalk-faint:#7A7266;
+    --tape:       #F5760F;
+    --stamp:      #C6FF00;
+    --rec:        #E63946;
+    --line:       rgba(241,236,225,0.14);
+    --stage-bg:   #0A0806;
+    --slide-bg:   #14110D;
+
+    --font-display: 'Bebas Neue', 'Oswald', sans-serif;
+    --font-body:    'Source Sans 3', 'Helvetica Neue', sans-serif;
+    --font-mono:    'Space Mono', 'Courier New', monospace;
+
+    --size-mega:   240px;
+    --size-title:  150px;
+    --size-body:    34px;
+    --size-label:   22px;
+    --pad: 110px;
+
+    --snap:  cubic-bezier(0.16, 1, 0.3, 1);
+    --clack: cubic-bezier(0.86, 0, 0.07, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===========================================
+   2. VIEWPORT-BASE.CSS (PALCO FIXO 16:9)
+   =========================================== */
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-viewport { position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-stage { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; background:var(--slide-bg,#fff); }
+.slide { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--slide-bg,#fff); }
+.slide.active, .slide.visible { visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img, video, canvas, svg { max-width:100%; max-height:100%; }
+.deck-controls { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1000; }
+@media print {
+    html, body { width:1920px; height:auto; overflow:visible; background:#fff; }
+    .deck-viewport { position:static; overflow:visible; background:#fff; }
+    .deck-stage { position:static; width:auto; height:auto; transform:none !important; background:none; }
+    .slide { position:relative; display:block !important; visibility:visible !important; opacity:1 !important; pointer-events:auto !important; width:1920px; height:1080px; break-after:page; page-break-after:always; }
+    .slide:last-child { break-after:auto; page-break-after:auto; }
+    .deck-controls { display:none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; }
+}
+
+/* ===========================================
+   3. CHROME DO PALCO
+   =========================================== */
+.grain {
+    position:absolute; inset:-50%; width:200%; height:200%;
+    pointer-events:none; z-index:50; opacity:0.15;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    animation:grainShift 0.7s steps(4) infinite;
+}
+@keyframes grainShift {
+    0%{transform:translate(0,0)} 25%{transform:translate(-3%,2%)}
+    50%{transform:translate(2%,-3%)} 75%{transform:translate(-2%,-2%)} 100%{transform:translate(0,0)}
+}
+.clapper-bar {
+    position:absolute; top:0; left:0; height:22px; width:100%; z-index:40;
+    background:repeating-linear-gradient(-45deg, var(--tape) 0 34px, var(--ink-2) 34px 68px);
+    transform:scaleX(0); transform-origin:left center; transition:transform 0.75s var(--clack);
+}
+.slide.visible .clapper-bar { transform:scaleX(1); }
+
+/* Claquete de canto: numero, tempo do slide e minuto acumulado.
+   Gerada por JS a partir do data-min de cada <section class="slide">.
+   Slides de plano levam data-min="0": o tempo deles ja esta contado no
+   bloco da rodagem, e somar de novo estouraria os 90 minutos. */
+.slate { position:absolute; top:58px; right:var(--pad); z-index:41; text-align:right; font-family:var(--font-mono); line-height:1.3; }
+.slate .n   { display:block; font-size:var(--size-label); letter-spacing:0.22em; color:var(--chalk-faint); }
+.slate .t   { display:block; font-size:32px; font-weight:700; letter-spacing:0.06em; color:var(--tape); }
+.slate .acc { display:block; font-size:17px; letter-spacing:0.16em; color:rgba(241,236,225,0.26); }
+
+/* ===========================================
+   4. ANIMACAO DE ENTRADA
+   =========================================== */
+.reveal { opacity:0; transform:translateY(38px); transition:opacity 0.7s var(--snap), transform 0.7s var(--snap); }
+.slide.visible .reveal { opacity:1; transform:translateY(0); }
+.slide.visible .d1{transition-delay:.10s} .slide.visible .d2{transition-delay:.20s}
+.slide.visible .d3{transition-delay:.30s} .slide.visible .d4{transition-delay:.40s}
+.slide.visible .d5{transition-delay:.50s} .slide.visible .d6{transition-delay:.60s}
+.slide.visible .d7{transition-delay:.70s}
+.wipe { clip-path:inset(0 100% 0 0); transition:clip-path 0.9s var(--clack); }
+.slide.visible .wipe { clip-path:inset(0 0 0 0); }
+
+/* ===========================================
+   5. COMPONENTES DE CONTEUDO
+   =========================================== */
+.tape-tag {
+    display:inline-block; background:var(--tape); color:var(--ink);
+    font-family:var(--font-display); font-size:34px; letter-spacing:0.06em;
+    padding:10px 28px 6px; transform:rotate(-1.2deg);
+}
+.eyebrow { font-family:var(--font-mono); font-size:var(--size-label); letter-spacing:0.3em; color:var(--tape); text-transform:uppercase; }
+h1,h2,h3 {
+    font-family:var(--font-display); font-weight:400; color:var(--chalk);
+    /* folga obrigatoria: acentos de caixa alta (A, E, O) sao cortados abaixo de 0.96 */
+    line-height:0.96; padding-top:0.06em; letter-spacing:0.01em;
+}
+h1 { font-size:var(--size-title); }
+p, li { font-family:var(--font-body); font-size:var(--size-body); color:var(--chalk-dim); line-height:1.45; }
+.lead { color:var(--chalk); font-size:40px; }
+em { color:var(--tape); font-style:italic; }
+strong { color:var(--chalk); font-weight:700; }
+.pad { position:absolute; inset:0; padding:150px var(--pad) 96px; display:flex; flex-direction:column; }
+.foot { position:absolute; left:var(--pad); bottom:58px; max-width:1300px; font-family:var(--font-mono); font-size:var(--size-label); letter-spacing:0.18em; color:var(--chalk-faint); }
+.impact { align-items:flex-start; justify-content:center; }
+.impact h1 { font-size:var(--size-mega); line-height:0.92; max-width:1500px; }
+.impact .sub { font-size:40px; margin-top:44px; max-width:1300px; }
+.ghost { position:absolute; right:40px; bottom:-110px; font-family:var(--font-display); font-size:620px; line-height:0.7; color:rgba(241,236,225,0.045); z-index:0; pointer-events:none; }
+
+.link {
+    font-family:var(--font-mono); font-size:19px; color:var(--stamp); text-decoration:none;
+    border-bottom:2px solid rgba(198,255,0,0.35); margin-top:12px; align-self:flex-start;
+}
+.link:hover, .link:focus-visible { border-bottom-color:var(--stamp); outline:none; }
+
+/* ===========================================
+   6. TRES COLUNAS GENERICAS (regras, contrastes, blocos)
+   =========================================== */
+.tres-regras { display:grid; grid-template-columns:repeat(3,1fr); gap:40px; margin-top:auto; margin-bottom:auto; padding-bottom:40px; }
+.tres-regras div { border-top:5px solid var(--tape); padding-top:26px; }
+.tres-regras b { display:block; font-family:var(--font-display); font-size:50px; color:var(--chalk); line-height:1; margin-bottom:18px; padding-top:0.06em; }
+.tres-regras span { font-family:var(--font-body); font-size:29px; color:var(--chalk-dim); line-height:1.4; }
+
+.duas-col { display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-top:auto; margin-bottom:auto; padding-bottom:40px; }
+.duas-col > div { border-left:5px solid var(--tape); padding-left:30px; }
+.duas-col b { display:block; font-family:var(--font-display); font-size:62px; color:var(--chalk); line-height:0.98; padding-top:0.06em; }
+.duas-col em { display:block; font-family:var(--font-mono); font-size:17px; letter-spacing:0.18em; color:var(--tape); font-style:normal; margin-bottom:10px; }
+.duas-col span { display:block; font-family:var(--font-body); font-size:29px; color:var(--chalk-dim); line-height:1.4; margin-top:16px; }
+
+/* ===========================================
+   7. MICROFONE E GRAVADOR
+   Uma foto por tipo, uma frase por tipo. O resto e oralidade.
+   Arquivos esperados: assets/microfones/lapela.jpg, boom.jpg, camera.jpg
+   =========================================== */
+.mics { display:grid; grid-template-columns:repeat(3,1fr); gap:36px; margin-top:26px; }
+.mic { display:flex; flex-direction:column; min-width:0; }
+.mic img, .mic .aguardando {
+    /* 2:1 em vez de 16:9: sao fotos de apoio, nao exemplos de enquadramento,
+       e o quadro mais baixo e o que impede a coluna de bater no rodape */
+    width:100%; aspect-ratio:2/1; height:auto; object-fit:contain;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.1);
+}
+.mic .aguardando {
+    border:3px dashed rgba(241,236,225,0.24); background:var(--ink-2);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    font-family:var(--font-mono); font-size:17px; letter-spacing:0.12em; color:var(--chalk-faint); text-align:center; padding:0 20px;
+}
+.mic .aguardando span { color:var(--tape); font-size:26px; }
+.mic b { font-family:var(--font-display); font-size:44px; color:var(--tape); line-height:1; padding-top:0.06em; margin-top:18px; }
+.mic i { font-family:var(--font-mono); font-size:15px; letter-spacing:0.14em; color:var(--chalk-faint); font-style:normal; margin-top:4px; }
+.mic span { font-family:var(--font-body); font-size:24px; color:var(--chalk-dim); line-height:1.35; margin-top:12px; }
+
+
+/* ===========================================
+   7b. TIRA DE TRES MOMENTOS
+   Um frame, e embaixo o som que foi feito na mao naquele plano.
+   =========================================== */
+.tiras { display:grid; grid-template-columns:repeat(3,1fr); gap:34px; margin-top:auto; margin-bottom:auto; padding-bottom:40px; }
+.tira { display:flex; flex-direction:column; min-width:0; }
+.tira img { width:100%; aspect-ratio:2.4/1; height:auto; object-fit:contain; background:#0A0806; border:1px solid rgba(241,236,225,0.12); }
+.tira b { font-family:var(--font-display); font-size:42px; color:var(--tape); line-height:1; padding-top:0.06em; margin-top:16px; }
+.tira span { font-family:var(--font-body); font-size:25px; color:var(--chalk-dim); line-height:1.35; margin-top:10px; }
+.tira span i { color:var(--chalk); font-style:normal; font-weight:700; }
+
+/* ===========================================
+   7c. LINK GRANDE, PRA CLICAR NA PROJECAO
+   Alvo generoso de proposito: em aula o clique e apressado e a tela
+   esta longe. Abre em aba nova, entao o deck nao sai do lugar.
+   =========================================== */
+.link-grande {
+    display:inline-flex; align-items:center; gap:18px; align-self:flex-start;
+    background:var(--stamp); color:var(--ink); text-decoration:none;
+    font-family:var(--font-display); font-size:40px; letter-spacing:0.04em;
+    padding:16px 34px 12px; margin-top:26px;
+    transition:transform 0.2s var(--snap);
+}
+.link-grande:hover, .link-grande:focus-visible { transform:translateY(-3px); outline:none; }
+.link-grande em { font-family:var(--font-mono); font-size:17px; letter-spacing:0.14em; font-style:normal; opacity:0.66; }
+.refs a::before { content:'\2197  '; }
+
+/* ===========================================
+   8. BANCO DE PLANOS E SLIDE DE PLANO
+   Os arquivos ficam em assets/planos/. Enquanto nao existirem, cada um vira
+   espaco reservado com o nome de arquivo que o deck esta esperando, pra dar
+   pra encaixar sem editar HTML.
+   =========================================== */
+.banco {
+    /* seis colunas e nao quatro: com onze planos, quatro colunas viram tres
+       fileiras e a ultima passa por baixo do rodape. Duas fileiras cabem. */
+    display:grid; grid-template-columns:repeat(4,1fr); gap:26px 24px; margin-top:26px;
+}
+.banco .item { display:flex; flex-direction:column; min-width:0; }
+.banco .moldura {
+    position:relative; width:100%; aspect-ratio:16/9;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.12);
+    display:flex; align-items:center; justify-content:center;
+}
+.banco video, .banco img { width:100%; height:100%; object-fit:contain; }
+.banco .vazio {
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.1em;
+    color:var(--chalk-faint); text-align:center; padding:0 12px; line-height:1.5;
+    border:3px dashed rgba(241,236,225,0.2); background:var(--ink-2);
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+}
+.banco .vazio b { font-family:var(--font-display); font-size:34px; color:var(--tape); line-height:1; }
+.banco .nm { font-family:var(--font-display); font-size:30px; color:var(--chalk); line-height:1.02; padding-top:0.06em; margin-top:10px; }
+.banco .cm { font-family:var(--font-body); font-size:18px; color:var(--chalk-dim); line-height:1.28; margin-top:4px; }
+
+/* Slide de um plano: video grande, e embaixo o que o aluno tem em maos.
+   O play e sempre do educador. Clicar no video pausa, pra travar num
+   instante e perguntar "que som e esse?". */
+.slide-plano .pad { padding:120px var(--pad) 96px; }
+.plano-topo { display:flex; align-items:baseline; gap:28px; }
+.plano-topo .num { font-family:var(--font-display); font-size:120px; color:var(--tape); line-height:0.9; }
+.plano-topo .nm  { font-family:var(--font-display); font-size:76px; color:var(--chalk); line-height:0.95; padding-top:0.06em; }
+.plano-topo .dur { margin-left:auto; font-family:var(--font-mono); font-size:22px; letter-spacing:0.18em; color:var(--chalk-faint); }
+.plano-palco {
+    position:relative; width:100%; flex:1; min-height:0; margin-top:24px;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.12);
+    display:flex; align-items:center; justify-content:center;
+}
+.plano-palco video, .plano-palco img.frame { width:100%; height:100%; object-fit:contain; }
+.plano-palco video { cursor:pointer; }
+/* Selo discreto sobre o frame: deixa claro que aquilo ainda e imagem parada,
+   pra ninguem apertar play esperando movimento. */
+.plano-palco .selo {
+    position:absolute; left:0; bottom:0; z-index:4;
+    background:var(--tape); color:var(--ink);
+    font-family:var(--font-mono); font-size:15px; letter-spacing:0.16em;
+    padding:9px 18px;
+}
+.plano-palco .vazio {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:14px;
+    border:4px dashed rgba(241,236,225,0.2); background:var(--ink-2);
+    font-family:var(--font-mono); font-size:22px; letter-spacing:0.12em; color:var(--chalk-faint); text-align:center;
+}
+.plano-palco .vazio b { font-family:var(--font-display); font-size:90px; color:var(--tape); line-height:1; }
+.plano-palco .botao-play {
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    background:var(--tape); color:var(--ink); border:none; cursor:pointer;
+    font-family:var(--font-display); font-size:46px; letter-spacing:0.05em;
+    padding:16px 46px 12px; z-index:3;
+}
+.slide-plano.tocando .botao-play { display:none; }
+.plano-baixo { display:flex; gap:40px; align-items:baseline; margin-top:22px; border-top:3px solid var(--tape); padding-top:18px; }
+.plano-baixo b { font-family:var(--font-mono); font-size:17px; letter-spacing:0.2em; color:var(--tape); flex-shrink:0; padding-top:5px; }
+.plano-baixo span { font-family:var(--font-body); font-size:30px; color:var(--chalk); line-height:1.3; }
+
+/* ===========================================
+   10. CRONOMETRO
+   =========================================== */
+.regras { list-style:none; display:grid; gap:20px; margin-top:30px; }
+.regras li { display:flex; gap:26px; align-items:flex-start; border-left:4px solid var(--tape); padding-left:26px; font-size:33px; color:var(--chalk); }
+.regras li > span { font-family:var(--font-mono); font-size:22px; color:var(--chalk-faint); padding-top:6px; flex-shrink:0; }
+/* INEGOCIÁVEL: tudo que vem depois do número mora dentro de .txt.
+   Sem esse embrulho o <strong> vira um item de flex por conta própria e a
+   frase se quebra em colunas. Foi o que aconteceu e deixou o slide ilegível. */
+.regras li > .txt { flex:1; min-width:0; }
+.regras li > .txt b { display:block; font-family:var(--font-display); font-size:34px;
+    color:var(--tape); line-height:1; padding-top:0.06em; margin-bottom:6px; letter-spacing:0.02em; }
+.regras li > .txt > span { display:block; font-family:var(--font-body); font-size:28px; color:var(--chalk-dim); line-height:1.35; }
+.regras li > .txt > span strong { color:var(--chalk); }
+.regras .exemplo { display:inline; white-space:nowrap; margin:0 7px; }
+.regras .exemplo { font-family:var(--font-mono); font-size:24px; color:var(--stamp); letter-spacing:0.14em; }
+
+.timer-wrap { display:flex; align-items:center; justify-content:center; flex:1; flex-direction:column; gap:16px; }
+.timer {
+    font-family:var(--font-mono); font-weight:700; font-size:230px; line-height:1;
+    color:var(--tape); letter-spacing:0.02em; cursor:pointer; user-select:none;
+    font-variant-numeric:tabular-nums;
+}
+.timer.parado { color:var(--chalk-faint); }
+.timer.acabando { color:var(--rec); }
+.timer-dica { font-family:var(--font-mono); font-size:24px; letter-spacing:0.2em; color:var(--chalk-faint); }
+
+/* ===========================================
+   11. RESULTADO DE QUARTA (obra de aluno)
+   Fica so no deck local. Nao vai pro repositorio publico.
+   =========================================== */
+.quarta {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:26px 30px;
+    /* largura menor que o slide de proposito: com seis quadros em duas
+       fileiras, a segunda fileira passaria por baixo do rodape fixo */
+    width:1460px; margin:28px auto 0;
+}
+.quarta .item { display:flex; flex-direction:column; min-width:0; }
+.quarta img, .quarta .vazio {
+    width:100%; aspect-ratio:16/9; height:auto; object-fit:contain;
+    background:#0A0806; border:1px solid rgba(241,236,225,0.12);
+}
+.quarta .vazio {
+    border:3px dashed rgba(241,236,225,0.2); background:var(--ink-2);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:15px; letter-spacing:0.1em; color:var(--chalk-faint); text-align:center; padding:0 14px; line-height:1.5;
+}
+.quarta .pal { font-family:var(--font-display); font-size:34px; color:var(--tape); line-height:1; padding-top:0.06em; margin-top:8px; }
+
+/* ===========================================
+   12. REFERENCIAS PRA VER DEPOIS
+   =========================================== */
+.refs { display:grid; grid-template-columns:repeat(3,1fr); gap:30px 36px; margin-top:28px; }
+.refs > div { border-top:4px solid var(--tape); padding-top:18px; display:flex; flex-direction:column; min-width:0; }
+.refs .tipo { font-family:var(--font-mono); font-size:14px; letter-spacing:0.18em; color:var(--chalk-faint); text-transform:uppercase; }
+.refs b { font-family:var(--font-display); font-size:36px; color:var(--chalk); line-height:0.98; padding-top:0.06em; margin-top:8px; }
+.refs span { font-family:var(--font-body); font-size:21px; color:var(--chalk-dim); line-height:1.32; margin-top:8px; flex:1; }
+.refs a { font-family:var(--font-mono); font-size:19px; color:var(--stamp); text-decoration:none;
+          border-bottom:2px solid rgba(198,255,0,0.35); margin-top:12px; align-self:flex-start; }
+.refs a:hover, .refs a:focus-visible { border-bottom-color:var(--stamp); outline:none; }
+
+/* ===========================================
+   13. CHROME FORA DO PALCO
+   =========================================== */
+.deck-controls {
+    left:auto; right:26px; bottom:20px; transform:none;
+    font-family:var(--font-mono); font-size:13px; letter-spacing:0.2em;
+    color:rgba(241,236,225,0.45); background:rgba(20,17,13,0.8);
+    padding:7px 16px; border:1px solid rgba(241,236,225,0.12); user-select:none;
+}
+.edit-hotzone { position:fixed; top:0; left:0; width:80px; height:80px; z-index:10000; cursor:pointer; }
+.edit-toggle {
+    position:fixed; top:18px; left:18px; z-index:10001;
+    background:var(--tape); color:var(--ink); border:none; border-radius:4px;
+    font-size:18px; padding:9px 13px; cursor:pointer; opacity:0; pointer-events:none; transition:opacity .3s ease;
+}
+.edit-toggle.show, .edit-toggle.active { opacity:1; pointer-events:auto; }
+.edit-toggle.active { background:var(--stamp); }
+[contenteditable="true"] { outline:2px dashed var(--stamp); outline-offset:6px; cursor:text; }
+</style>
+<style>
+/* ===========================================
+   ENCONTRO 8 · componentes próprios
+   =========================================== */
+
+/* A PÁGINA DE ROTEIRO
+   Fundo claro de propósito: roteiro é papel, e a troca de fundo no meio de um
+   deck escuro já diz "agora é outro objeto". A fonte é mono porque roteiro é
+   mono, e isso não é decoração: é a fonte que garante que uma página seja um
+   minuto. */
+.folha {
+    background:#F1ECE1; color:#14110D; padding:38px 46px;
+    font-family:var(--font-mono); font-size:19px; line-height:1.5;
+    position:relative; width:100%;
+}
+.folha .cab   { font-weight:700; letter-spacing:0.04em; }
+.folha .acao  { margin:18px 0; }
+.folha .pers  { margin:18px 0 0 230px; font-weight:700; }
+.folha .fala  { margin:0 0 0 170px; max-width:430px; }
+.folha .rub   { margin:0 0 0 190px; font-style:italic; }
+
+/* etiqueta que aponta pra parte da página */
+.folha .tag {
+    position:absolute; right:-10px; background:var(--tape); color:var(--ink);
+    font-family:var(--font-display); font-size:23px; letter-spacing:0.04em;
+    padding:5px 14px 2px; white-space:nowrap; transform:translateX(100%);
+}
+.folha .tag::before {
+    content:''; position:absolute; left:-26px; top:50%; width:26px; height:2px;
+    background:var(--tape);
+}
+.pagina-wrap { display:grid; grid-template-columns:1fr 330px; gap:0 70px; margin-top:24px; align-items:start; }
+.legenda-lado { display:grid; gap:20px; padding-top:6px; }
+.legenda-lado div { border-left:4px solid var(--tape); padding-left:18px; }
+.legenda-lado b { display:block; font-family:var(--font-display); font-size:30px; color:var(--tape); line-height:1; padding-top:0.06em; }
+.legenda-lado span { display:block; font-family:var(--font-body); font-size:21px; color:var(--chalk-dim); line-height:1.35; margin-top:6px; }
+
+/* EXEMPLO DE FILME FAMOSO
+   Imagem à esquerda, o que aprender à direita. */
+.exemplo { display:grid; grid-template-columns:1fr 1fr; gap:56px; margin-top:auto; margin-bottom:auto; padding-bottom:36px; align-items:center; }
+.exemplo .cartaz { width:100%; aspect-ratio:16/9; object-fit:cover; background:#0A0806; border:1px solid rgba(241,236,225,0.12); }
+.exemplo .cartaz.vazio { display:flex; align-items:center; justify-content:center;
+    border:3px dashed rgba(241,236,225,0.22); background:var(--ink-2);
+    font-family:var(--font-display); font-size:56px; color:var(--chalk-faint); text-align:center; line-height:1; padding:20px; }
+.exemplo .filme { font-family:var(--font-mono); font-size:16px; letter-spacing:0.18em; color:var(--tape); text-transform:uppercase; }
+.exemplo h2 { font-size:72px; line-height:0.98; margin-top:12px; }
+.exemplo p { font-size:28px; margin-top:18px; }
+.exemplo .regra { margin-top:24px; border-top:4px solid var(--stamp); padding-top:16px;
+    font-family:var(--font-body); font-size:30px; color:var(--chalk); line-height:1.3; }
+
+/* DEIXA PRA PASSAR O FILME NO PLAYER DELE
+   O arquivo em alta fica no computador do educador, não no deck. Este slide
+   é só a marcação de quando parar de projetar slide e começar a projetar filme. */
+.deixa { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center; gap:22px; }
+.deixa .tc { font-family:var(--font-mono); font-weight:700; font-size:92px; color:var(--tape); letter-spacing:0.04em; line-height:1; }
+.deixa .tc small { display:block; font-size:22px; letter-spacing:0.22em; color:var(--chalk-faint); font-weight:400; margin-bottom:14px; }
+.deixa .arq { font-family:var(--font-mono); font-size:19px; color:var(--chalk-dim); letter-spacing:0.1em; }
+.deixa .olhar { max-width:1180px; font-size:30px; color:var(--chalk); line-height:1.4; border-top:3px solid var(--line); padding-top:22px; }
+
+/* OS CINCO PLANOS DA CENA */
+.planos5 { display:grid; grid-template-columns:150px 110px 1fr; gap:0; margin-top:26px; border-top:3px solid var(--tape); }
+.planos5 > div { padding:15px 18px; border-bottom:1px solid var(--line); font-family:var(--font-body); font-size:26px; color:var(--chalk-dim); line-height:1.3; }
+.planos5 .c { font-family:var(--font-mono); font-size:22px; color:var(--tape); }
+.planos5 .s { font-family:var(--font-display); font-size:34px; color:var(--chalk); line-height:1; padding-top:calc(15px + 0.06em); }
+.planos5 .cabeca { font-family:var(--font-mono); font-size:14px; letter-spacing:0.16em; color:var(--chalk-faint); text-transform:uppercase; border-bottom:2px solid var(--line); }
+
+/* ===========================================
+   EIXO E OVER THE SHOULDER
+   Planta baixa desenhada em SVG, em vez de imagem de banco. Fica nítida em
+   qualquer tamanho de projeção, está em português e usa as cores do deck.
+   =========================================== */
+.eixo-wrap { display:grid; grid-template-columns:1.25fr 1fr; gap:54px; margin-top:26px; align-items:center; }
+.eixo-wrap svg { width:100%; height:auto; display:block; }
+.eixo-nota { display:grid; gap:22px; }
+.eixo-nota div { border-left:4px solid var(--tape); padding-left:20px; }
+.eixo-nota b { display:block; font-family:var(--font-display); font-size:34px; color:var(--chalk); line-height:1; padding-top:0.06em; }
+.eixo-nota span { display:block; font-family:var(--font-body); font-size:24px; color:var(--chalk-dim); line-height:1.35; margin-top:7px; }
+.eixo-nota .erro { border-left-color:var(--rec); }
+.eixo-nota .erro b { color:var(--rec); }
+
+/* ===========================================
+   LOGO NO SLIDE DE ABERTURA
+   Esta regra tinha ficado pra tras quando montei este deck a partir do
+   anterior: eu copiei so o primeiro bloco <style>, e a logo estava num bloco
+   seguinte. Sem ela a imagem abria em tamanho natural (1140x401) e empurrava
+   o texto pra cima do rodape.
+   =========================================== */
+.logo-hero { width:330px; height:auto; display:block; margin-bottom:28px; }
+
+/* Folga de seguranca no slide de abertura: o conteudo e centralizado
+   verticalmente, e sem esta reserva ele pode descer ate a linha dos quatro
+   eixos, que fica fixa no rodape. */
+.title-slide .pad.impact { padding-bottom:170px; }
+
+/* ===========================================
+   TABELA DE TROCA · literatura vs roteiro
+   Cinco pares, cada um com um modo de falha diferente. A etiqueta da esquerda
+   nomeia o que está sendo convertido, pra turma reconhecer o tipo do erro no
+   que eles mesmos escreverem daqui a pouco.
+   =========================================== */
+.troca { display:grid; grid-template-columns:190px 1fr 56px 1fr; gap:0; margin-top:26px; border-top:3px solid var(--tape); }
+.troca > div { padding:17px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; }
+.troca .et { font-family:var(--font-mono); font-size:15px; letter-spacing:0.16em; color:var(--tape); text-transform:uppercase; }
+.troca .nao { font-family:var(--font-body); font-size:27px; color:var(--chalk-faint); font-style:italic; line-height:1.25; }
+.troca .seta { font-family:var(--font-mono); font-size:26px; color:var(--tape); justify-content:center; }
+.troca .sim { font-family:var(--font-body); font-size:27px; color:var(--chalk); font-weight:600; line-height:1.25; }
+.troca .cabeca { font-family:var(--font-mono); font-size:14px; letter-spacing:0.18em; color:var(--chalk-faint);
+    text-transform:uppercase; border-bottom:2px solid var(--line); padding-bottom:11px; padding-top:0; }
+
+/* ===========================================
+   ARMADILHAS · erros que dão pra filmar e mesmo assim são erros
+   A tabela anterior cobre "não dá pra filmar". Estes são de outra natureza:
+   filmáveis, comuns em quem começa, e os três atrapalham justamente o
+   exercício de hoje.
+   =========================================== */
+.armadilhas { display:grid; gap:26px; margin-top:26px; }
+.armadilha { display:grid; grid-template-columns:62px 1fr; gap:0 24px; align-items:start;
+    border-left:4px solid var(--rec); padding-left:24px; }
+.armadilha .n { font-family:var(--font-display); font-size:52px; color:var(--rec); line-height:1; padding-top:0.06em; }
+.armadilha .corpo { min-width:0; }
+.armadilha b { display:block; font-family:var(--font-display); font-size:40px; color:var(--chalk); line-height:1; padding-top:0.06em; }
+.armadilha .erra { display:block; font-family:var(--font-mono); font-size:21px; color:var(--chalk-faint);
+    line-height:1.3; margin-top:9px; font-style:italic; }
+.armadilha .cura { display:block; font-family:var(--font-body); font-size:25px; color:var(--chalk-dim); line-height:1.35; margin-top:9px; }
+.armadilha .cura strong { color:var(--chalk); }
+
+/* ===========================================
+   CURADORIA · cards de vídeo com a capa do YouTube
+   A capa é o que faz o aluno clicar depois. Título numa lista ninguém abre.
+   =========================================== */
+.curadoria { display:grid; grid-template-columns:repeat(3,1fr); gap:38px; margin-top:30px; }
+.curadoria a { display:flex; flex-direction:column; min-width:0; text-decoration:none; color:inherit;
+    transition:transform 0.2s var(--snap); }
+.curadoria a:hover, .curadoria a:focus-visible { transform:translateY(-5px); outline:none; }
+.curadoria .capa { position:relative; width:100%; aspect-ratio:16/9; background:#0A0806;
+    border:1px solid rgba(241,236,225,0.12); overflow:hidden; }
+.curadoria .capa img { width:100%; height:100%; object-fit:cover; display:block; }
+.curadoria .dur { position:absolute; right:0; bottom:0; background:var(--ink); color:var(--chalk);
+    font-family:var(--font-mono); font-size:15px; padding:5px 10px; }
+.curadoria .quem { font-family:var(--font-mono); font-size:14px; letter-spacing:0.16em;
+    color:var(--chalk-faint); text-transform:uppercase; margin-top:14px; }
+.curadoria b { font-family:var(--font-display); font-size:36px; color:var(--chalk); line-height:1.02;
+    padding-top:0.06em; margin-top:7px; }
+.curadoria p { font-family:var(--font-body); font-size:21px; color:var(--chalk-dim); line-height:1.33; margin-top:9px; flex:1; }
+.curadoria .ver { font-family:var(--font-mono); font-size:17px; color:var(--stamp); margin-top:12px;
+    border-bottom:2px solid rgba(198,255,0,0.35); align-self:flex-start; }
+ .curadoria a:hover .ver { border-bottom-color:var(--stamp); }
+
+.link-grande {
+    display:inline-flex; align-items:center; gap:16px; align-self:center;
+    background:var(--stamp); color:var(--ink); text-decoration:none;
+    font-family:var(--font-display); font-size:34px; letter-spacing:0.04em;
+    padding:13px 30px 10px; margin-top:6px;
+    transition:transform 0.2s var(--snap);
+}
+.link-grande:hover, .link-grande:focus-visible { transform:translateY(-3px); outline:none; }
+.link-grande em { font-family:var(--font-mono); font-size:15px; letter-spacing:0.14em; font-style:normal; opacity:0.66; }
+</style>
+</head>
+<body>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+    <!-- 01 ABERTURA -->
+    <section class="slide title-slide active visible" data-min="2">
+        <div class="clapper-bar"></div>
+        <div class="pad impact">
+            <img class="logo-hero reveal d1" src="assets/logo.png" alt="Tudo Vira Filme">
+            <div class="eyebrow reveal d2">Encontro 8 de 32 · Cine Teatro Ribalta</div>
+            <h1 class="wipe" style="font-size:160px">ANTES DE FILMAR,<br>ALGUÉM ESCREVE</h1>
+            <p class="sub reveal d4">Hoje é só papel de novo, e é a última vez. O que vocês escreverem hoje é o que a gente filma na próxima.</p>
+        </div>
+        <div class="foot">VER · ESCOLHER · FAZER · MOSTRAR</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 02 RODA -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="ghost">02</div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Roda de abertura</div>
+            <h1 class="wipe" style="font-size:140px">O QUE FICOU<br>DE QUARTA?</h1>
+            <p class="sub reveal d4">Do Kuleshov, do André, ou da ideia de que o sentido nasce entre dois planos. Uma coisa só.</p>
+        </div>
+        <div class="foot">TODO MUNDO FALA, INCLUSIVE EU</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 03 O QUE É ROTEIRO · cinco pares, cinco modos de falha -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Começando pelo que ele não é</div>
+            <h1 class="wipe" style="margin-top:10px;font-size:92px">ROTEIRO NÃO É LITERATURA</h1>
+            <p class="reveal d2" style="margin-top:16px;font-size:29px;max-width:1620px">Tudo da coluna da esquerda funciona num livro, porque quem lê constrói a imagem sozinho. <strong>Nenhuma delas dá pra filmar.</strong></p>
+            <div class="troca">
+                <div class="cabeca"></div>
+                <div class="cabeca">Não dá pra apontar a câmera</div>
+                <div class="cabeca"></div>
+                <div class="cabeca">Dá</div>
+                <div class="et reveal d3">sentimento</div>
+                <div class="nao reveal d3">Ela sentiu um vazio antigo.</div>
+                <div class="seta reveal d3">&rarr;</div>
+                <div class="sim reveal d3">Ela olha a cadeira vazia.</div>
+                <div class="et reveal d4">memória</div>
+                <div class="nao reveal d4">Ele lembra do pai.</div>
+                <div class="seta reveal d4">&rarr;</div>
+                <div class="sim reveal d4">Ele tira a foto da carteira e olha.</div>
+                <div class="et reveal d5">passado</div>
+                <div class="nao reveal d5">Eles não se falam há dez anos.</div>
+                <div class="seta reveal d5">&rarr;</div>
+                <div class="sim reveal d5">Ele estende a mão. Ela não aperta.</div>
+                <div class="et reveal d6">silêncio</div>
+                <div class="nao reveal d6">O silêncio era constrangedor.</div>
+                <div class="seta reveal d6">&rarr;</div>
+                <div class="sim reveal d6">Ninguém fala. A geladeira liga.</div>
+                <div class="et reveal d7">tempo</div>
+                <div class="nao reveal d7">O tempo passou devagar.</div>
+                <div class="seta reveal d7">&rarr;</div>
+                <div class="sim reveal d7">O cigarro queima até o filtro.</div>
+            </div>
+        </div>
+        <div class="foot">SÓ ENTRA O QUE SE VÊ E O QUE SE OUVE</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- ARMADILHAS · segundo grupo de erros, de natureza diferente da tabela.
+         Os três escolhidos são os que atrapalham o exercício de hoje. -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Agora os que dão pra filmar e mesmo assim são erro</div>
+            <h1 class="wipe" style="margin-top:10px;font-size:84px">AS TRÊS ARMADILHAS DE QUEM COMEÇA</h1>
+            <div class="armadilhas">
+                <div class="armadilha reveal d3">
+                    <div class="n">01</div>
+                    <div class="corpo">
+                        <b>A FALA EXPLICA A CENA</b>
+                        <span class="erra">“Como você sabe, a gente não se fala desde que o papai morreu.”</span>
+                        <span class="cura">Ninguém diz isso pra quem já sabe. Isso é o roteirista falando com a plateia pela boca do personagem. <strong>Se a informação é mesmo necessária, mostra. Se não é, corta.</strong></span>
+                    </div>
+                </div>
+                <div class="armadilha reveal d5">
+                    <div class="n">02</div>
+                    <div class="corpo">
+                        <b>A CÂMERA ENTRA NO ROTEIRO</b>
+                        <span class="erra">“CLOSE no rosto dela. A câmera gira lentamente e corta para o detalhe da mão.”</span>
+                        <span class="cura">Isso não é roteiro, é decupagem, e é o outro papel, que vocês vão escrever logo depois. <strong>No roteiro entra o que acontece. Na decupagem entra de onde se olha.</strong> Misturar deixa a página ilegível pra todo mundo que não é você.</span>
+                    </div>
+                </div>
+                <div class="armadilha reveal d7">
+                    <div class="n">03</div>
+                    <div class="corpo">
+                        <b>ESCREVER O QUE NÃO DÁ PRA PRODUZIR</b>
+                        <span class="erra">“Seis amigos atravessam a cidade debaixo de chuva, de helicóptero.”</span>
+                        <span class="cura">Dá pra filmar, com dinheiro. <strong>Roteiro se escreve olhando pro que existe:</strong> quantas pessoas vocês têm, que lugar vocês conseguem, que dia e que hora. Limite não é castigo, é o que faz o filme acontecer.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="foot">OS TRÊS ATRAPALHAM EXATAMENTE O QUE VOCÊS VÃO FAZER DAQUI A POUCO</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 04 A FORMA · a página anotada -->
+    <section class="slide" data-min="8">
+        <div class="clapper-bar"></div>
+        <div class="pad" style="padding-top:120px">
+            <div class="eyebrow reveal d1">A forma existe por um motivo prático</div>
+            <h1 class="wipe" style="margin-top:10px;font-size:76px">CADA LINHA É UMA ORDEM PRA ALGUÉM</h1>
+            <div class="pagina-wrap">
+                <div class="folha reveal d3">
+                    <div class="cab">CENA 01 - INT. CONSULTÓRIO - DIA</div>
+                    <div class="acao">Estantes com livros. A sala tem uma luz aconchegante.<br>Diante do psiquiatra, Letícia acaba de relatar seu drama.</div>
+                    <div class="pers">LETÍCIA</div>
+                    <div class="fala">E é isso, doutor. Eu não sei mais o que fazer...</div>
+                    <div class="pers">PSIQUIATRA</div>
+                    <div class="rub">(incrédulo)</div>
+                    <div class="fala">Péra! Calma, calma! Você tá me afirmando que pode ficar invisível?</div>
+                </div>
+                <div class="legenda-lado">
+                    <div class="reveal d4"><b>CABEÇALHO</b><span>INT ou EXT diz se precisa de luz. DIA ou NOITE diz a diária. O nome do lugar diz o que o produtor tem que conseguir.</span></div>
+                    <div class="reveal d5"><b>AÇÃO</b><span>Presente, terceira pessoa, e só o que a câmera pega. É o que o diretor decupa e o que a arte vai montar.</span></div>
+                    <div class="reveal d6"><b>PERSONAGEM</b><span>Em caixa alta. É assim que o ator acha a fala dele correndo os olhos pela página.</span></div>
+                    <div class="reveal d7"><b>DIÁLOGO</b><span>Coluna estreita de propósito. O olho separa fala de ação na hora, sem ler. Quem está em cena acha o que é dele correndo os olhos pela margem.</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 05 A CENA É A UNIDADE -->
+    <section class="slide" data-min="4">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">A peça de montar do roteiro</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:96px">CENA É UM LUGAR,<br>UM TEMPO, UMA COISA<br>QUE ACONTECE</h1>
+            <div class="tres-regras">
+                <div class="reveal d3">
+                    <b>MUDOU DE LUGAR</b>
+                    <span>Saiu do consultório e foi pro corredor? Acabou a cena. Começa outra, com cabeçalho novo.</span>
+                </div>
+                <div class="reveal d5">
+                    <b>PULOU NO TEMPO</b>
+                    <span>Passou uma hora, um dia, um ano? Acabou a cena. Não existe “duas horas depois” no meio de uma cena.</span>
+                </div>
+                <div class="reveal d7">
+                    <b>NADA ACONTECEU</b>
+                    <span>Se no fim da cena tudo está igual ao começo, ela não é uma cena. É uma conversa, e conversa se corta.</span>
+                </div>
+            </div>
+        </div>
+        <div class="foot">ESCREVER UMA CENA É ESCREVER UMA MUDANÇA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 07 EXEMPLO · CENTRAL DO BRASIL -->
+    <section class="slide" data-min="6">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">A regra mais repetida, e a mais desobedecida</div>
+            <h1 class="wipe" style="margin-top:10px;font-size:104px">MOSTRAR, NÃO EXPLICAR</h1>
+            <div class="exemplo">
+                <img class="cartaz reveal d3" data-exemplo="central-do-brasil" alt="">
+                <div class="reveal d5">
+                    <div class="filme">Central do Brasil · 1998</div>
+                    <h2>A GAVETA</h2>
+                    <p>Dora escreve cartas para analfabetos na estação. Depois ela leva as cartas pra casa, lê em voz alta pra uma amiga, e joga numa gaveta. As cartas nunca são postadas.</p>
+                    <div class="regra">Ninguém diz que a Dora é cínica. Ninguém precisa. A gaveta diz.</div>
+                </div>
+            </div>
+        </div>
+        <div class="foot">SE O PERSONAGEM PRECISA EXPLICAR, A CENA FALHOU</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 09 LEITURA DRAMÁTICA -->
+    <section class="slide" data-min="8">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Agora um roteiro de verdade, feito aqui</div>
+            <h1 class="wipe" style="margin-top:12px;font-size:92px">PRÁTICAS DO ABSURDO<br>CENA 01</h1>
+            <p class="reveal d2" style="margin-top:22px;font-size:32px;max-width:1560px">Melhor roteiro no Cine Veracruz, em Goiás. São micro-histórias que se costuram pra falar de uma coisa só. <strong>A gente vai ler a primeira em voz alta, antes de ver qualquer imagem.</strong></p>
+            <ul class="regras" style="margin-top:34px">
+                <li class="reveal d4"><span>01</span><div class="txt">
+                    <b>DOIS LEEM, EU LEIO A AÇÃO</b>
+                    <span>Alguém faz a Letícia, alguém faz o psiquiatra. Lê como quem conversa, não como quem declama.</span>
+                </div></li>
+                <li class="reveal d5"><span>02</span><div class="txt">
+                    <b>REPAREM NO QUE NÃO ESTÁ ESCRITO</b>
+                    <span>Em nenhum lugar diz que ela está desesperada, nem que ele não acredita. Isso tudo está só no que eles fazem e falam.</span>
+                </div></li>
+                <li class="reveal d6"><span>03</span><div class="txt">
+                    <b>GUARDEM A IMAGEM QUE VOCÊS MONTAREM</b>
+                    <span>Daqui a pouco a gente compara com a que eu filmei. Não vai ser igual, e isso é a parte interessante.</span>
+                </div></li>
+            </ul>
+        </div>
+        <div class="foot">LEITURA DE MESA · É ASSIM QUE COMEÇA TODO FILME</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 10 A DECUPAGEM DA MESMA CENA -->
+    <section class="slide" data-min="6">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">A mesma cena, agora em posições de câmera</div>
+            <h1 class="wipe" style="margin-top:10px;font-size:84px">TRÊS PÁGINAS, CINCO PLANOS</h1>
+            <div class="planos5">
+                <div class="cabeca">Plano</div><div class="cabeca">Tamanho</div><div class="cabeca">O que é</div>
+                <div class="c reveal d2">C01 P01</div><div class="s reveal d2">PG&gt;PM</div><div class="reveal d2">Travelling in, se aproxima do doutor. A cadeira está vazia.</div>
+                <div class="c reveal d3">C01 P02</div><div class="s reveal d3">PM</div><div class="reveal d3">Contraplano de Letícia, na cadeira.</div>
+                <div class="c reveal d4">C01 P03</div><div class="s reveal d4">PM</div><div class="reveal d4">Contraplano do psiquiatra.</div>
+                <div class="c reveal d5">C01 P04</div><div class="s reveal d5">PP</div><div class="reveal d5">Ele fecha os olhos.</div>
+                <div class="c reveal d6">C01 P05</div><div class="s reveal d6">PM</div><div class="reveal d6">Contraplano da cadeira vazia. Não vemos mais Letícia, ouvimos só a voz dela.</div>
+            </div>
+            <p class="reveal d7" style="margin-top:26px;font-size:30px;max-width:1620px">O P02 e o P03 se revezam o diálogo inteiro. <strong>Não é um plano por fala.</strong> Cada vez que o roteiro volta pra ela, volta pro mesmo plano, rodado na mesma hora.</p>
+        </div>
+        <div class="foot">DECUPAR É DECIDIR DE ONDE SE OLHA, E QUANTAS VEZES SE VOLTA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- EIXO · a regra que faz os dois contraplanos funcionarem.
+         Desenho em SVG, sem imagem de banco. -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad" style="padding-top:124px">
+            <div class="eyebrow reveal d1">Por que os dois contraplanos funcionam</div>
+            <h1 class="wipe" style="margin-top:10px;font-size:84px">A LINHA DOS 180 GRAUS</h1>
+            <div class="eixo-wrap">
+                <div class="reveal d3"><svg viewBox="0 0 980 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Planta baixa do eixo entre dois personagens">
+    <!-- metade permitida: tudo que está abaixo da linha do eixo -->
+    <rect x="0" y="250" width="980" height="310" fill="#C6FF00" opacity="0.05"/>
+    <!-- o eixo -->
+    <line x1="40" y1="250" x2="940" y2="250" stroke="#F5760F" stroke-width="4" stroke-dasharray="16 12"/>
+    <text x="40" y="232" fill="#F5760F" font-family="'Space Mono',monospace" font-size="22" letter-spacing="3">O EIXO</text>
+    <!-- personagens, com o nariz apontando um pro outro -->
+    <circle cx="320" cy="250" r="44" fill="#1E1A14" stroke="#F1ECE1" stroke-width="4"/>
+    <line x1="364" y1="250" x2="398" y2="250" stroke="#F1ECE1" stroke-width="4"/>
+    <text x="320" y="262" fill="#F1ECE1" font-family="'Bebas Neue',sans-serif" font-size="42" text-anchor="middle">A</text>
+    <circle cx="660" cy="250" r="44" fill="#1E1A14" stroke="#F1ECE1" stroke-width="4"/>
+    <line x1="616" y1="250" x2="582" y2="250" stroke="#F1ECE1" stroke-width="4"/>
+    <text x="660" y="262" fill="#F1ECE1" font-family="'Bebas Neue',sans-serif" font-size="42" text-anchor="middle">B</text>
+    <!-- cameras do lado certo -->
+    <g fill="#C6FF00">
+      <polygon points="250,470 214,520 286,520"/><text x="250" y="548" fill="#C6FF00" font-family="'Space Mono',monospace" font-size="20" text-anchor="middle">P02</text>
+      <polygon points="490,430 454,480 526,480"/><text x="490" y="508" fill="#C6FF00" font-family="'Space Mono',monospace" font-size="20" text-anchor="middle">P01</text>
+      <polygon points="730,470 694,520 766,520"/><text x="730" y="548" fill="#C6FF00" font-family="'Space Mono',monospace" font-size="20" text-anchor="middle">P03</text>
+    </g>
+    <!-- camera do lado errado -->
+    <polygon points="730,90 694,40 766,40" fill="#E63946"/>
+    <line x1="694" y1="40" x2="766" y2="104" stroke="#E63946" stroke-width="6"/>
+    <line x1="766" y1="40" x2="694" y2="104" stroke="#E63946" stroke-width="6"/>
+    <text x="730" y="26" fill="#E63946" font-family="'Space Mono',monospace" font-size="20" text-anchor="middle">NUNCA</text>
+  </svg></div>
+                <div class="eixo-nota">
+                    <div class="reveal d4">
+                        <b>TRAÇA UMA LINHA ENTRE OS DOIS</b>
+                        <span>Essa linha imaginária é o eixo. Ela divide a sala em duas metades.</span>
+                    </div>
+                    <div class="reveal d5">
+                        <b>ESCOLHE UMA METADE E FICA NELA</b>
+                        <span>Pode pôr a câmera em qualquer lugar dessa metade. Assim o A olha sempre pra direita e o B sempre pra esquerda, e quem assiste entende que eles se olham.</span>
+                    </div>
+                    <div class="reveal d6 erro">
+                        <b>ATRAVESSOU, QUEBROU</b>
+                        <span>Se a câmera passar pro outro lado, os dois passam a olhar pro mesmo lado. Parece que o B virou as costas e está falando com outra pessoa.</span>
+                    </div>
+                    <div class="reveal d7">
+                        <b>OVER THE SHOULDER</b>
+                        <span>Os planos 02 e 03 são isso: a câmera fica atrás do ombro de um pra filmar o outro. O ombro no canto do quadro é o que lembra o espectador de que tem alguém ali ouvindo.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 11 DEIXA · O FILME SAI DO COMPUTADOR DO EDUCADOR, NÃO DO DECK -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Agora sim</div>
+            <h1 class="wipe" style="font-size:112px">PASSA O FILME</h1>
+            <div class="deixa">
+                <div class="tc reveal d3"><small>CENA 01 · NA AULA A GENTE VIU ESTE TRECHO</small>00:17 → 04:18</div>
+                <div class="arq reveal d4">PRÁTICAS DO ABSURDO · 2019 · MELHOR ROTEIRO NO CINE VERACRUZ</div>
+                <p class="olhar reveal d6">A pergunta pra fazer depois: <strong>o que apareceu na tela que não estava escrito em lugar nenhum?</strong> A cor da parede, a luz do abajur, o jeito que ela senta. Nada disso estava no roteiro, e tudo isso é decisão de alguém.</p>
+                <a class="link-grande reveal d7" href="https://www.youtube.com/watch?v=uQgC-AxzBdE" target="_blank" rel="noopener">O FILME INTEIRO NO YOUTUBE <em>uQgC-AxzBdE</em></a>
+            </div>
+        </div>
+        <div class="foot">O FILME INTEIRO ESTÁ NO BOTÃO VERDE</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- DEPOIS DO FILME · o motor da cena, agora em cima de uma cena que eles
+         leram e viram. Era um slide sobre Cidade de Deus contado em palavras,
+         que o educador cortou com razao: descrever cena sem mostrar é o erro
+         que a propria aula condena. -->
+    <section class="slide" data-min="4">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Agora que vocês leram e viram</div>
+            <h1 class="wipe" style="margin-top:12px;font-size:88px">O QUE FAZ ESSA CENA ANDAR</h1>
+            <div class="duas-col">
+                <div class="reveal d3">
+                    <em>ALGUÉM QUER UMA COISA</em>
+                    <b>LETÍCIA QUER<br>SER ACREDITADA</b>
+                    <span>Não quer ser curada, nem explicada. Ela quer que uma pessoa, uma só, olhe e diga: eu vi.</span>
+                </div>
+                <div class="reveal d6">
+                    <em>ALGUMA COISA ATRAPALHA</em>
+                    <b>ELE ACHA<br>QUE É METÁFORA</b>
+                    <span>Ele escuta, anota, e transforma em diagnóstico. Quanto mais ele tenta ajudar, mais ela some.</span>
+                </div>
+            </div>
+            <p class="reveal d7" style="margin-top:4px;margin-bottom:34px;font-size:30px;max-width:1620px">É isso e só isso que segura três páginas de duas pessoas sentadas conversando. <strong>Tira o desejo, e sobra gente falando numa sala.</strong></p>
+        </div>
+        <div class="foot">SEM DESEJO NÃO HÁ CENA · HÁ DESCRIÇÃO</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 12 O EXERCÍCIO -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="ghost">12</div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">O que vocês vão escrever agora</div>
+            <h1 class="wipe" style="margin-top:12px;font-size:112px">MEIA PÁGINA,<br>UMA CENA SÓ</h1>
+            <ul class="regras">
+                <li class="reveal d3"><span>01</span><div class="txt">
+                    <b>UM LUGAR, DUAS PESSOAS</b>
+                    <span>Um lugar que exista de verdade e que a gente consiga usar. Duas pessoas, nem uma a mais.</span>
+                </div></li>
+                <li class="reveal d4"><span>02</span><div class="txt">
+                    <b>UMA QUER ALGUMA COISA</b>
+                    <span>E a outra atrapalha, nem que seja sem querer. Sem isso é conversa, não é cena.</span>
+                </div></li>
+                <li class="reveal d5"><span>03</span><div class="txt">
+                    <b>SÓ O QUE SE VÊ E SE OUVE</b>
+                    <span>Nada de “ele pensa”, “ela lembra”, “ele sente”. Se não dá pra apontar a câmera, reescreve.</span>
+                </div></li>
+                <li class="reveal d6"><span>04</span><div class="txt">
+                    <b>NO FIM, A DECUPAGEM</b>
+                    <span>Quantos planos essa cena precisa, e de onde a câmera olha em cada um. Como a gente acabou de ver.</span>
+                </div></li>
+            </ul>
+            <p class="reveal d7" style="margin-top:24px;font-size:29px;max-width:1560px"><strong>Vocês escrevem juntos, uma cena só.</strong> Na próxima aula a gente filma ela, e cada um assume uma função no set.</p>
+        </div>
+        <div class="foot">ESSA FOLHA É O QUE VIRA FILME NA PRÓXIMA AULA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 13 CRONÔMETRO -->
+    <section class="slide" data-min="22">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Escrevendo</div>
+            <h1 class="wipe" style="font-size:96px">MEIA PÁGINA</h1>
+            <div class="timer-wrap">
+                <div class="timer parado" id="cronometro" data-seg="1320">22:00</div>
+                <div class="timer-dica">CLIQUE NO NÚMERO PRA COMEÇAR E PRA PAUSAR</div>
+            </div>
+        </div>
+        <div class="foot">EU CIRCULO · A PERGUNTA É SEMPRE A MESMA: ISSO DÁ PRA FILMAR?</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 14 LEITURA EM VOZ ALTA -->
+    <section class="slide" data-min="5">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Antes de acabar</div>
+            <h1 class="wipe" style="margin-top:14px;font-size:104px">LÊ EM VOZ ALTA</h1>
+            <p class="reveal d3" style="margin-top:24px;font-size:34px;max-width:1540px">Roteiro que não foi lido em voz alta não está pronto. É lendo que a gente descobre a fala que ninguém diria e a ação que ninguém faria.</p>
+            <div class="tres-regras" style="padding-bottom:24px">
+                <div class="reveal d5">
+                    <b>TROPEÇOU NA FALA</b>
+                    <span>Se quem lê gaguejou, não é problema de leitura. É porque ninguém fala assim. Reescreve.</span>
+                </div>
+                <div class="reveal d6">
+                    <b>FALOU O QUE JÁ SE VÊ</b>
+                    <span>Se a fala descreve uma coisa que a imagem já mostra, ela sobra. Corta a fala e deixa a imagem.</span>
+                </div>
+                <div class="reveal d7">
+                    <b>NÃO ACONTECEU NADA</b>
+                    <span>Se no fim tudo está igual ao começo, falta a coisa que a cena perdeu ou ganhou.</span>
+                </div>
+            </div>
+        </div>
+        <div class="foot">LÊ ALTO · SEMPRE</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- 15 FECHAMENTO -->
+    <section class="slide" data-min="3">
+        <div class="clapper-bar"></div>
+        <div class="pad impact">
+            <div class="eyebrow reveal d1">Na próxima</div>
+            <h1 class="wipe" style="font-size:132px">A GENTE FILMA<br>O QUE VOCÊS<br>ESCREVERAM</h1>
+            <p class="sub reveal d4">Cinco pessoas, cinco funções: direção, câmera, som, arte e continuidade. <strong>Cada um assume uma, e vai pra Carteira de Realizador.</strong> A folha de hoje é o que a gente leva pro set.</p>
+        </div>
+        <div class="foot">PRÓXIMO ENCONTRO · DO PAPEL PRA CÂMERA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- PRA VER DEPOIS · curadoria de vídeo -->
+    <section class="slide" data-min="0">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">Pra ver depois, em casa</div>
+            <h1 class="wipe" style="margin-top:8px;font-size:78px">ROTEIRO · O QUE VALE ASSISTIR</h1>
+            <div class="curadoria">
+                <a class="reveal d3" href="https://www.youtube.com/watch?v=PTOy8P6im_g" target="_blank" rel="noopener">
+                    <div class="capa"><img src="assets/refs/furtado.jpg" alt=""><span class="dur">24:03</span></div>
+                    <div class="quem">Jorge Furtado · Projeto Paradiso</div>
+                    <b>ROTEIRO: DO COMEÇO AO FIM,<br>PASSANDO PELO MEIO</b>
+                    <p>Aula aberta de um dos maiores roteiristas do Brasil, o cara de Ilha das Flores. Se você for ver um só da lista, veja este.</p>
+                    <span class="ver">↗ comece por este</span>
+                </a>
+                <a class="reveal d5" href="https://www.youtube.com/watch?v=MRdByIldZb4" target="_blank" rel="noopener">
+                    <div class="capa"><img src="assets/refs/ilha.jpg" alt=""><span class="dur">13 min</span></div>
+                    <div class="quem">Jorge Furtado · 1989</div>
+                    <b>ILHA DAS FLORES</b>
+                    <p>O curta brasileiro mais famoso que existe, e ele é quase todo texto. Veja depois da aula dele e repare que o filme inteiro é uma coisa escrita ganhando forma.</p>
+                    <span class="ver">↗ o filme dele</span>
+                </a>
+                <a class="reveal d7" href="https://www.youtube.com/watch?v=uQgC-AxzBdE" target="_blank" rel="noopener">
+                    <div class="capa"><img src="assets/refs/praticas.jpg" alt=""><span class="dur">15:47</span></div>
+                    <div class="quem">Alex Buck · 2019</div>
+                    <b>PRÁTICAS DO ABSURDO</b>
+                    <p>O filme inteiro, não só a cena que a gente viu. São cinco histórias costuradas, e vale ver como uma puxa a outra sem ninguém explicar nada.</p>
+                    <span class="ver">↗ o resto do filme</span>
+                </a>
+            </div>
+        </div>
+        <div class="foot">TUDO ISSO FICA NO SITE DA TURMA</div>
+        <div class="grain"></div>
+    </section>
+
+    <!-- PRA FAZER DEPOIS · exercícios de treino -->
+    <section class="slide" data-min="0">
+        <div class="clapper-bar"></div>
+        <div class="pad">
+            <div class="eyebrow reveal d1">E o que vale fazer sozinho</div>
+            <h1 class="wipe" style="margin-top:8px;font-size:78px">TRÊS TREINOS DE ROTEIRISTA</h1>
+            <div class="refs">
+                <div class="reveal d3">
+                    <div class="tipo">O exercício que me ensinou</div>
+                    <b>LÊ A CENA, VÊ A CENA</b>
+                    <span>Pega o roteiro de um filme que você já viu. Lê uma cena, pausa, assiste aquela cena, volta pro papel. Foi assim que eu aprendi, com Cidade de Deus, quando era estudante. É chato nas primeiras três cenas e depois você não consegue mais parar.</span>
+                </div>
+                <div class="reveal d5">
+                    <div class="tipo">Onde achar roteiro</div>
+                    <b>ROTEIROS ESTÃO NA INTERNET</b>
+                    <span>Quase todo filme premiado tem o roteiro publicado de graça, em PDF. Procure pelo nome do filme mais a palavra screenplay, ou roteiro. Comece por um que você já viu umas três vezes.</span>
+                </div>
+                <div class="reveal d7">
+                    <div class="tipo">Treino de cinco minutos</div>
+                    <b>DESCREVE O QUE VOCÊ VÊ</b>
+                    <span>Senta em qualquer lugar público e escreve o que está acontecendo, em presente, só o que a câmera pegaria. Nada de “ele parece cansado”. É o músculo inteiro do roteiro num exercício só.</span>
+                </div>
+            </div>
+            <p class="reveal d7" style="margin-top:34px;font-size:30px;max-width:1620px">O terceiro é o que mais rende e o que ninguém faz. <strong>Cinco minutos por dia, por uma semana, e a sua página muda de qualidade.</strong></p>
+        </div>
+        <div class="foot">TUDO ISSO FICA NO SITE DA TURMA</div>
+        <div class="grain"></div>
+    </section>
+
+</main>
+</div>
+
+<div class="deck-controls" id="deckCounter">01 / 16</div>
+<div class="edit-hotzone" aria-hidden="true"></div>
+<button class="edit-toggle" id="editToggle" title="Modo de edição (E)">✏️</button>
+<script>
+/* ===========================================
+   OS PLANOS DO EXERCÍCIO
+   Esta é a única lista que precisa ser editada quando os vídeos chegarem.
+   Cada plano gera duas coisas sozinho: uma célula no banco e um slide
+   inteiro pra projetar na hora da gravação.
+
+   arquivo   nome do arquivo em assets/planos/ (sem a pasta)
+   nome      como aparece na tela, curto
+   com       com o que dá pra fazer aquele som aqui na Ribalta
+   dur       duração do plano, só pra referência do educador
+
+   Pra tirar um plano da lista, comente a linha dele.
+   =========================================== */
+/* Este encontro não gera slides de plano: a lista fica vazia de propósito.
+   O motor continua aqui porque é o mesmo de sempre, e simplesmente não acha
+   nada pra montar. */
+const PLANOS = [];
+
+/* ===========================================
+   CONTROLADOR DA APRESENTAÇÃO
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        /* Os slides de plano nascem antes de qualquer coisa: o resto do deck
+           conta slide e minuto, e precisa encontrar tudo já no lugar. */
+        this.montarPlanos();
+
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.stage = document.getElementById('deckStage');
+        this.counter = document.getElementById('deckCounter');
+        this.current = 0;
+        this.montarPalcos();
+        this.montarImagens('[data-mic]',    'mic',    p => `assets/microfones/${p}.jpg`);
+        this.montarExemplos();
+        this.montarImagens('[data-quarta]', 'quarta', p => `assets/quarta/${p}.jpg`);
+        this.buildSlates();
+        this.setupStageScale();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.setupCronometro();
+        this.setupVideos();
+        this.showSlide(0);
+    }
+
+    /* Grade do banco e um slide por plano, tudo a partir de PLANOS.
+       Os slides de plano levam data-min="0" de propósito: o tempo deles já
+       está dentro do bloco de rodagem, e contar de novo estouraria os 90. */
+    montarPlanos() {
+        const banco = document.getElementById('bancoPlanos');
+        const ancora = document.getElementById('ancoraPlanos');
+        if (!banco || !ancora) return;
+
+        banco.innerHTML = PLANOS.map((p, i) => {
+            const n = String(i + 1).padStart(2, '0');
+            return `<div class="item" data-plano="${n}">
+                <div class="moldura">
+                    <video muted preload="metadata"
+                           data-fonte="assets/planos/${p.arquivo}"
+                           data-frame="assets/planos/${p.arquivo.replace('.mp4','.jpg')}"></video>
+                </div>
+                <div class="nm">${n} · ${p.nome}</div>
+                <div class="cm">${p.com}</div>
+            </div>`;
+        }).join('');
+
+        PLANOS.forEach((p, i) => {
+            const n = String(i + 1).padStart(2, '0');
+            const sec = document.createElement('section');
+            sec.className = 'slide slide-plano';
+            sec.dataset.min = '0';
+            sec.dataset.plano = n;
+            sec.innerHTML = `
+                <div class="clapper-bar"></div>
+                <div class="pad">
+                    <div class="plano-topo reveal d1">
+                        <div class="num">${n}</div>
+                        <div class="nm">${p.nome}</div>
+                        <div class="dur">${p.dur} · EM LOOP</div>
+                    </div>
+                    <div class="plano-palco reveal d3"
+                         data-arquivo="assets/planos/${p.arquivo}"
+                         data-frame="assets/planos/${p.arquivo.replace('.mp4','.jpg')}"
+                         data-loop="1"
+                         data-vazio="${n}<br>salvar o plano como<br>assets/planos/${p.arquivo}"></div>
+                    <div class="plano-baixo reveal d5">
+                        <b>DÁ PRA FAZER COM</b>
+                        <span>${p.com}</span>
+                    </div>
+                </div>
+                <div class="grain"></div>`;
+            ancora.parentNode.insertBefore(sec, ancora);
+        });
+    }
+
+    /* Palcos de vídeo: tenta o arquivo, e se ele não existir vira espaço
+       reservado dizendo exatamente onde salvar. Nenhum vídeo toca sozinho,
+       quem aperta o play é o educador. Os planos do exercício vão em loop,
+       porque o aluno precisa ver a ação repetindo enquanto tenta o som. */
+    montarPalcos() {
+        const avisar = (palco) => {
+            const box = document.createElement('div');
+            box.className = 'vazio';
+            const p = palco.dataset.vazio.split('<br>');
+            box.innerHTML = `<b>${p[0]}</b>` + p.slice(1).join('<br>');
+            palco.appendChild(box);
+        };
+
+        document.querySelectorAll('.plano-palco[data-arquivo]').forEach(palco => {
+            const v = document.createElement('video');
+            v.className = 'video-aula';
+            v.preload = 'metadata';
+            v.playsInline = true;
+            if (palco.dataset.loop) v.loop = true;
+            v.src = palco.dataset.arquivo;
+            v.addEventListener('error', () => {
+                v.remove();
+                const btn = palco.querySelector('.botao-play');
+                if (btn) btn.remove();
+                /* Sem o vídeo, tenta o frame do plano. Só se ele também faltar
+                   é que aparece o aviso dizendo onde salvar o arquivo. */
+                const frame = palco.dataset.frame;
+                if (frame) {
+                    const img = document.createElement('img');
+                    img.className = 'frame';
+                    img.src = frame;
+                    img.alt = '';
+                    img.addEventListener('error', () => { img.remove(); avisar(palco); });
+                    palco.appendChild(img);
+                    const selo = document.createElement('div');
+                    selo.className = 'selo';
+                    selo.textContent = 'FRAME · VÍDEO AINDA NÃO ESTÁ NA PASTA';
+                    palco.appendChild(selo);
+                } else {
+                    avisar(palco);
+                }
+            });
+            palco.appendChild(v);
+            const btn = document.createElement('button');
+            btn.className = 'botao-play';
+            btn.textContent = 'PLAY';
+            palco.appendChild(btn);
+            palco.closest('.slide').classList.add('slide-video');
+        });
+
+        /* Miniaturas do banco: mesmo raciocínio, sem play. */
+        document.querySelectorAll('.banco video[data-fonte]').forEach(v => {
+            v.src = v.dataset.fonte;
+            v.addEventListener('error', () => {
+                const moldura = v.closest('.moldura');
+                const cel = v.closest('.item');
+                const n = cel ? cel.dataset.plano : '';
+                v.remove();
+                const img = document.createElement('img');
+                img.src = v.dataset.frame;
+                img.alt = '';
+                img.addEventListener('error', () => {
+                    img.remove();
+                    const box = document.createElement('div');
+                    box.className = 'vazio';
+                    box.innerHTML = `<b>${n}</b>${v.dataset.fonte.replace('assets/planos/', '')}`;
+                    moldura.appendChild(box);
+                });
+                moldura.appendChild(img);
+            });
+        });
+    }
+
+    /* Fotos ilustrativas (microfones) e resultados de quarta: entram sozinhas
+       quando os arquivos existirem. Sem arquivo, espaço reservado com o
+       caminho esperado, pra não precisar mexer no HTML pra encaixar. */
+    montarImagens(seletor, chave, caminho) {
+        document.querySelectorAll('img' + seletor).forEach(img => {
+            const p = img.dataset[chave];
+            img.src = caminho(p);
+            img.addEventListener('error', () => {
+                const box = document.createElement('div');
+                box.className = 'aguardando vazio';
+                box.innerHTML = `<span>${p.replace(/-/g, ' ').toUpperCase()}</span>${caminho(p)}`;
+                img.replaceWith(box);
+            });
+        });
+    }
+
+    /* Cartazes dos exemplos: sem arquivo, o nome do filme ocupa o lugar. */
+    montarExemplos() {
+        document.querySelectorAll('img[data-exemplo]').forEach(img => {
+            const nome = img.dataset.exemplo;
+            img.src = `assets/ex-${nome}.jpg`;
+            img.addEventListener('error', () => {
+                const box = document.createElement('div');
+                box.className = 'cartaz vazio';
+                box.textContent = nome.replace(/-/g, ' ').toUpperCase();
+                img.replaceWith(box);
+            });
+        });
+    }
+
+    /* Claquete de canto a partir do data-min. O acumulado é somado aqui,
+       então nunca desencontra do tempo individual. */
+    buildSlates() {
+        let acumulado = 0;
+        this.slides.forEach((slide, i) => {
+            const min = parseInt(slide.dataset.min || '0', 10);
+            acumulado += min;
+            const el = document.createElement('div');
+            el.className = 'slate';
+            el.innerHTML =
+                `<span class="n">${String(i + 1).padStart(2, '0')}</span>` +
+                `<span class="t">${min}'</span>` +
+                `<span class="acc">${acumulado}' DE 90'</span>`;
+            slide.appendChild(el);
+        });
+        this.totalMin = acumulado;
+    }
+
+    setupStageScale() {
+        const scale = () => {
+            const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const x = (window.innerWidth - 1920 * factor) / 2;
+            const y = (window.innerHeight - 1080 * factor) / 2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+        };
+        scale();
+        window.addEventListener('resize', scale);
+    }
+
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') return;
+            /* Em slide de vídeo o espaço toca e pausa, em vez de avançar: é o
+               reflexo de quem apresenta, e as setas continuam navegando. */
+            if (e.key === ' ') {
+                const v = this.slides[this.current].querySelector('.video-aula');
+                if (v) { e.preventDefault(); v.paused ? v.play() : v.pause(); return; }
+            }
+            switch (e.key) {
+                case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+                    e.preventDefault(); this.next(); break;
+                case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+                    e.preventDefault(); this.prev(); break;
+                case 'Home': e.preventDefault(); this.showSlide(0); break;
+                case 'End':  e.preventDefault(); this.showSlide(this.slides.length - 1); break;
+            }
+        });
+    }
+
+    setupTouchNav() {
+        let startX = 0, startY = 0;
+        document.addEventListener('touchstart', (e) => {
+            startX = e.changedTouches[0].clientX; startY = e.changedTouches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? this.next() : this.prev();
+        }, { passive: true });
+    }
+
+    setupWheelNav() {
+        let lock = false;
+        document.addEventListener('wheel', (e) => {
+            if (lock || Math.abs(e.deltaY) < 24) return;
+            lock = true;
+            e.deltaY > 0 ? this.next() : this.prev();
+            setTimeout(() => { lock = false; }, 700);
+        }, { passive: true });
+    }
+
+    /* Cronômetro regressivo da rodagem. Clique no número inicia e pausa.
+       Conta pelo relógio de parede, não por tique de setInterval: o navegador
+       congela os intervalos de uma aba que não está na frente, e foi isso que
+       travou o cronômetro numa aula quando o educador trocou pro player de
+       vídeo. Guardando o instante de fim, qualquer tique atrasado recalcula
+       o tempo certo. E passa do zero pro negativo, sem parar. */
+    setupCronometro() {
+        const el = document.getElementById('cronometro');
+        if (!el) return;
+        const total = parseInt(el.dataset.seg, 10);
+        let fim = null, pausadoEm = total, intervalo = null;
+        const restante = () => fim === null ? pausadoEm : Math.round((fim - Date.now()) / 1000);
+        const pinta = () => {
+            const r = restante(), neg = r < 0, a = Math.abs(r);
+            const m = Math.floor(a / 60), s = a % 60;
+            el.textContent = `${neg ? '-' : ''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            el.classList.toggle('acabando', r <= 60);
+            el.classList.toggle('parado', fim === null && r > 0);
+        };
+        el.addEventListener('click', () => {
+            if (fim === null) {
+                fim = Date.now() + pausadoEm * 1000;
+                intervalo = setInterval(pinta, 250);
+            } else {
+                pausadoEm = restante(); fim = null;
+                clearInterval(intervalo);
+            }
+            pinta();
+        });
+        /* ao voltar pra aba, repinta na hora em vez de esperar o próximo tique */
+        document.addEventListener('visibilitychange', pinta);
+        window.addEventListener('focus', pinta);
+        pinta();
+    }
+
+    setupVideos() {
+        document.querySelectorAll('.slide-video').forEach(slide => {
+            const v = slide.querySelector('.video-aula');
+            const btn = slide.querySelector('.botao-play');
+            if (!v) return;
+            const capa = on => slide.classList.toggle('tocando', on);
+            if (btn) btn.addEventListener('click', () => v.play());
+            v.addEventListener('play',  () => capa(true));
+            v.addEventListener('pause', () => capa(false));
+            v.addEventListener('ended', () => { capa(false); v.currentTime = 0; });
+            /* Clicar na imagem pausa: dá pra travar num instante e perguntar
+               "que som é esse aí?" sem sair do slide. */
+            v.addEventListener('click', () => { if (!v.paused) v.pause(); });
+        });
+    }
+
+    next() { this.showSlide(this.current + 1); }
+    prev() { this.showSlide(this.current - 1); }
+
+    showSlide(index) {
+        this.current = Math.max(0, Math.min(index, this.slides.length - 1));
+        this.slides.forEach((slide, i) => {
+            const on = i === this.current;
+            slide.classList.toggle('active', on);
+            slide.classList.toggle('visible', on);
+        });
+        const n = String(this.current + 1).padStart(2, '0');
+        const t = String(this.slides.length).padStart(2, '0');
+        this.counter.textContent = `${n} / ${t}`;
+        this.rodarVideos();
+    }
+
+    /* Sair do slide rebobina, pra exibição nenhuma começar no meio se você
+       voltar nele depois. */
+    rodarVideos() {
+        this.slides.forEach((slide, i) => {
+            if (i === this.current) return;
+            slide.querySelectorAll('video').forEach(v => { v.pause(); v.currentTime = 0; });
+        });
+    }
+
+}
+
+/* ===========================================
+   EDIÇÃO INLINE
+   =========================================== */
+class InlineEditor {
+    constructor() {
+        this.isActive = false;
+        this.key = 'tvf-pub-encontro8';
+        this.targets = 'h1, h2, h3, p, li, .plano-baixo span, .legenda, .eyebrow, .foot';
+        this.restore();
+    }
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        const btn = document.getElementById('editToggle');
+        btn.classList.toggle('active', this.isActive);
+        btn.classList.toggle('show', this.isActive);
+        document.querySelectorAll('.slide ' + this.targets).forEach((el, i) => {
+            if (el.querySelector(this.targets)) return;
+            el.setAttribute('contenteditable', this.isActive ? 'true' : 'false');
+            el.dataset.editId = el.dataset.editId || 'e' + i;
+            if (this.isActive) el.addEventListener('blur', () => this.save(), { once: true });
+        });
+        if (!this.isActive) this.save();
+    }
+    save() {
+        const data = {};
+        document.querySelectorAll('[data-edit-id]').forEach(el => { data[el.dataset.editId] = el.innerHTML; });
+        try { localStorage.setItem(this.key, JSON.stringify(data)); } catch (e) {}
+    }
+    restore() {
+        let data;
+        try { data = JSON.parse(localStorage.getItem(this.key) || '{}'); } catch (e) { return; }
+        document.querySelectorAll('.slide ' + this.targets).forEach((el, i) => {
+            const id = 'e' + i;
+            if (data[id] !== undefined && !el.querySelector(this.targets)) {
+                el.dataset.editId = id; el.innerHTML = data[id];
+            }
+        });
+    }
+}
+
+const deck = new SlidePresentation();
+const editor = new InlineEditor();
+
+const hotzone = document.querySelector('.edit-hotzone');
+const editToggle = document.getElementById('editToggle');
+let hideTimeout = null;
+hotzone.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); editToggle.classList.add('show'); });
+hotzone.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400); });
+editToggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+editToggle.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400); });
+editToggle.addEventListener('click', (e) => { e.stopPropagation(); editor.toggleEditMode(); });
+hotzone.addEventListener('click', () => editor.toggleEditMode());
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'e' || e.key === 'E') && !(e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true')) {
+        editor.toggleEditMode();
+    }
+});
+</script>
+</body>
+</html>
