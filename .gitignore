@@ -1,3 +1,7 @@
 .DS_Store
 ._*
 *.mp4
+
+# Excecao: o resultado do exercicio de Foley da turma. Sao quatro arquivos
+# leves (4 MB no total) e sao a entrega do encontro, entao ficam no site.
+!encontro-06/resultados/*.mp4
